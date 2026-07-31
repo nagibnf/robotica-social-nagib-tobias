@@ -1,0 +1,331 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
+
+const ACTS = 8;
+
+const energyByAct = [0.34, 0.18, 0.5, 0.27, 0.14, 0.38, 0.22, 0.46];
+
+type DeckApi = {
+  initialize: () => Promise<void>;
+  destroy: () => void;
+  next: () => void;
+  prev: () => void;
+  on: (event: string, handler: (event: { indexh: number }) => void) => void;
+};
+
+function Field({ act }: { act: number }) {
+  const mountRef = useRef<HTMLDivElement>(null);
+  const targetEnergy = useRef(energyByAct[0]);
+
+  useEffect(() => {
+    targetEnergy.current = energyByAct[act] ?? energyByAct[0];
+  }, [act]);
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 5.1, 10.8);
+    camera.lookAt(0, -0.8, -2.2);
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+    mount.appendChild(renderer.domElement);
+
+    const columns = 62;
+    const rows = 40;
+    const positions = new Float32Array(columns * rows * 3);
+    let pointer = 0;
+    for (let z = 0; z < rows; z += 1) {
+      for (let x = 0; x < columns; x += 1) {
+        positions[pointer++] = (x / (columns - 1) - 0.5) * 22;
+        positions[pointer++] = 0;
+        positions[pointer++] = (z / (rows - 1) - 0.5) * 22 - 2;
+      }
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+
+    const uniforms = {
+      uTime: { value: 0 },
+      uEnergy: { value: targetEnergy.current },
+      uPhase: { value: 0 },
+      uColor: { value: new THREE.Color("#88e888") },
+    };
+
+    const material = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      uniforms,
+      vertexShader: `
+        uniform float uTime;
+        uniform float uEnergy;
+        uniform float uPhase;
+        varying float vAlpha;
+        void main() {
+          vec3 p = position;
+          float primary = sin(p.x * 0.48 + uTime * 0.32 + uPhase) * cos(p.z * 0.34 - uTime * 0.21);
+          float secondary = sin(length(p.xz) * 0.52 - uTime * 0.28 + uPhase * 0.5);
+          p.y += (primary * 0.72 + secondary * 0.28) * uEnergy;
+          vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
+          gl_Position = projectionMatrix * mvPosition;
+          gl_PointSize = (1.7 + uEnergy * 2.2) * (180.0 / -mvPosition.z);
+          vAlpha = 0.18 + smoothstep(-12.0, 7.0, p.z) * 0.55;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 uColor;
+        varying float vAlpha;
+        void main() {
+          vec2 uv = gl_PointCoord - vec2(0.5);
+          float d = length(uv);
+          float alpha = smoothstep(0.5, 0.14, d) * vAlpha;
+          gl_FragColor = vec4(uColor, alpha);
+        }
+      `,
+    });
+
+    const points = new THREE.Points(geometry, material);
+    points.rotation.x = -0.1;
+    scene.add(points);
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let frame = 0;
+    let time = 0;
+    let currentEnergy = targetEnergy.current;
+    let pointerX = 0;
+    let pointerY = 0;
+
+    const onPointerMove = (event: PointerEvent) => {
+      pointerX = (event.clientX / window.innerWidth - 0.5) * 0.32;
+      pointerY = (event.clientY / window.innerHeight - 0.5) * 0.18;
+    };
+
+    const onResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+    const animate = () => {
+      time += reducedMotion ? 0 : 0.016;
+      currentEnergy += (targetEnergy.current - currentEnergy) * 0.045;
+      uniforms.uTime.value = time;
+      uniforms.uEnergy.value = currentEnergy;
+      uniforms.uPhase.value += reducedMotion ? 0 : 0.0015;
+      points.rotation.z += (pointerX - points.rotation.z) * 0.012;
+      camera.position.x += (pointerX * 2.2 - camera.position.x) * 0.018;
+      camera.position.y += (5.1 - pointerY * 1.5 - camera.position.y) * 0.018;
+      camera.lookAt(0, -0.8, -2.2);
+      renderer.render(scene, camera);
+      frame = window.requestAnimationFrame(animate);
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("resize", onResize);
+    animate();
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("resize", onResize);
+      geometry.dispose();
+      material.dispose();
+      renderer.dispose();
+      renderer.domElement.remove();
+    };
+  }, []);
+
+  return <div ref={mountRef} className="field" aria-hidden="true" />;
+}
+
+function ActLabel({ children }: { children: React.ReactNode }) {
+  return <p className="act-label">{children}</p>;
+}
+
+function DeckSlide({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={className}>
+      <div className="act-frame">{children}</div>
+    </section>
+  );
+}
+
+export default function Home() {
+  const revealRef = useRef<HTMLDivElement>(null);
+  const deckRef = useRef<DeckApi | null>(null);
+  const [act, setAct] = useState(0);
+  const [contingency, setContingency] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function startDeck() {
+      if (!revealRef.current || deckRef.current) return;
+      const module = await import("reveal.js");
+      if (cancelled || !revealRef.current) return;
+      const Reveal = module.default;
+      const deck = new Reveal(revealRef.current, {
+        width: 1440,
+        height: 810,
+        margin: 0,
+        minScale: 0.2,
+        maxScale: 2,
+        controls: false,
+        progress: false,
+        center: false,
+        hash: true,
+        history: true,
+        transition: "fade",
+        backgroundTransition: "fade",
+        transitionSpeed: "fast",
+        touch: true,
+        keyboard: true,
+        overview: false,
+        help: false,
+      }) as DeckApi;
+      deck.on("slidechanged", ({ indexh }) => setAct(indexh));
+      await deck.initialize();
+      deckRef.current = deck;
+    }
+
+    startDeck();
+    return () => {
+      cancelled = true;
+      deckRef.current?.destroy();
+      deckRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === "c") {
+        event.preventDefault();
+        setContingency((value) => !value);
+      }
+      if (event.key === "Escape" && contingency) {
+        setContingency(false);
+      }
+      if (event.key.toLowerCase() === "f") {
+        event.preventDefault();
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [contingency]);
+
+  const navigateByClick = (event: React.PointerEvent<HTMLElement>) => {
+    if (contingency || event.button !== 0) return;
+    const target = event.target as HTMLElement;
+    if (target.closest("button, a")) return;
+    if (event.clientX < window.innerWidth * 0.16) deckRef.current?.prev();
+    else deckRef.current?.next();
+  };
+
+  return (
+    <main className="experience" onPointerUp={navigateByClick} aria-label="Apresentação Robótica Social">
+      <Field act={act} />
+      <div className="noise" aria-hidden="true" />
+
+      <div ref={revealRef} className="reveal">
+        <div className="slides">
+          <DeckSlide className="act act-opening">
+            <ActLabel>PAINEL / NAGIB × TOBIAS</ActLabel>
+            <h1 className="impact impact-hero">ROBÓTICA<br />SOCIAL</h1>
+            <p className="support support-accent">DO CORPO À PRESENÇA</p>
+            <p className="micro micro-right">DOIS PARTICIPANTES.<br />UMA RELAÇÃO EM TEMPO REAL.</p>
+          </DeckSlide>
+
+          <DeckSlide className="act act-presence">
+            <ActLabel>01 / PRESENÇA</ActLabel>
+            <h2 className="impact impact-wide">CORPO <span>≠</span><br />PRESENÇA</h2>
+            <p className="support support-bottom">ESTAR NO AMBIENTE <span>≠</span> PARTICIPAR DO AMBIENTE</p>
+          </DeckSlide>
+
+          <DeckSlide className="act act-architecture">
+            <ActLabel>02 / ARQUITETURA</ActLabel>
+            <h2 className="impact impact-stack">PERCEBER.<br />ORQUESTRAR.<br /><span>EXPRESSAR.</span></h2>
+            <div className="technical-strip" aria-label="Camadas do PRS">
+              <p><b>PERCEPÇÃO</b><br />voz · visão · sensores · distância</p>
+              <p><b>ORQUESTRAÇÃO</b><br />identidade · contexto · memória · segurança</p>
+              <p><b>EXPRESSÃO</b><br />fala · olhar · gestos · postura · ações</p>
+            </div>
+          </DeckSlide>
+
+          <DeckSlide className="act act-state">
+            <ActLabel>03 / ESTADO</ActLabel>
+            <h2 className="impact impact-wide">PRESENÇA<br /><span>É ESTADO.</span></h2>
+            <div className="state-readout" aria-label="Estado do Tobias">
+              <p><b>INTERLOCUTOR</b><span>NAGIB</span></p>
+              <p><b>INTENÇÃO</b><span>EXPLICAR</span></p>
+              <p><b>MEMÓRIA</b><span>ESTA SESSÃO</span></p>
+              <p><b>FALA</b><span>25 SEGUNDOS</span></p>
+              <p><b>SEGURANÇA</b><span>NORMAL</span></p>
+            </div>
+          </DeckSlide>
+
+          <DeckSlide className="act act-question">
+            <ActLabel>04 / RELAÇÃO</ActLabel>
+            <h2 className="impact impact-question">QUANDO COMEÇAMOS<br />A TRATAR UMA MÁQUINA<br /><span>COMO ALGUÉM?</span></h2>
+          </DeckSlide>
+
+          <DeckSlide className="act act-value">
+            <ActLabel>05 / VALOR</ActLabel>
+            <h2 className="impact impact-wide">ATENÇÃO<br />É FÁCIL.</h2>
+            <p className="counter-impact">RELAÇÃO<br /><span>É DIFÍCIL.</span></p>
+            <p className="micro micro-left">PRESENÇA ADICIONA VALOR<br />QUANDO CRIA CONTINUIDADE.</p>
+          </DeckSlide>
+
+          <DeckSlide className="act act-limits">
+            <ActLabel>06 / LIMITES</ActLabel>
+            <h2 className="impact impact-wide">TODA PRESENÇA<br /><span>PRECISA DE LIMITES.</span></h2>
+            <div className="limit-strip" aria-label="Camadas de risco">
+              <p>01 / FÍSICO</p>
+              <p>02 / CONVERSACIONAL</p>
+              <p>03 / RELACIONAL</p>
+            </div>
+          </DeckSlide>
+
+          <DeckSlide className="act act-closing">
+            <ActLabel>07 / ENCERRAMENTO</ActLabel>
+            <p className="preclose">A PERGUNTA NÃO É SE A IA TERÁ UM CORPO.</p>
+            <h2 className="impact impact-closing">QUE RELAÇÕES<br />VAMOS <span>PROJETAR?</span></h2>
+            <div className="closing-meta">
+              <p>PRS / PERSONAL ROBOT SYSTEM</p>
+              <p>NAGIB × TOBIAS</p>
+              <a href="https://www.bolha.com.br/produtos/tobias-robo" target="_blank" rel="noreferrer">BOLHA.COM.BR / TOBIAS</a>
+            </div>
+          </DeckSlide>
+        </div>
+      </div>
+
+      <div className="deck-chrome" aria-hidden="true">
+        <span>{String(act + 1).padStart(2, "0")} / {String(ACTS).padStart(2, "0")}</span>
+        <span>← VOLTAR · CLIQUE AVANÇAR · C CONTINGÊNCIA · F TELA CHEIA</span>
+      </div>
+      <div className="progress-rail" aria-hidden="true"><span style={{ width: `${((act + 1) / ACTS) * 100}%` }} /></div>
+
+      <div className={`contingency ${contingency ? "is-open" : ""}`} role="dialog" aria-modal="true" aria-hidden={!contingency} aria-label="Tela de contingência">
+        <p className="act-label">CONTINGÊNCIA / SISTEMA REAL</p>
+        <h2>PRESENÇA TAMBÉM É<br />SABER LIDAR COM A<br /><span>IMPERFEIÇÃO.</span></h2>
+        <p className="contingency-foot">PRESSIONE C OU ESC PARA VOLTAR</p>
+      </div>
+    </main>
+  );
+}
