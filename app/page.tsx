@@ -5,7 +5,16 @@ import * as THREE from "three";
 
 const ACTS = 8;
 
-const energyByAct = [0.34, 0.18, 0.5, 0.27, 0.14, 0.38, 0.22, 0.46];
+const fieldModes = [
+  { energy: 0.34, cameraY: 5.1, cameraZ: 10.8, fieldZ: 0.0 },
+  { energy: 0.2, cameraY: 4.7, cameraZ: 12.4, fieldZ: -0.8 },
+  { energy: 0.52, cameraY: 5.5, cameraZ: 9.8, fieldZ: 0.5 },
+  { energy: 0.29, cameraY: 4.9, cameraZ: 11.5, fieldZ: -0.4 },
+  { energy: 0.16, cameraY: 4.4, cameraZ: 13.0, fieldZ: -1.1 },
+  { energy: 0.4, cameraY: 5.3, cameraZ: 10.2, fieldZ: 0.35 },
+  { energy: 0.24, cameraY: 4.8, cameraZ: 11.9, fieldZ: -0.55 },
+  { energy: 0.48, cameraY: 5.6, cameraZ: 9.5, fieldZ: 0.7 },
+];
 
 type DeckApi = {
   initialize: () => Promise<void>;
@@ -17,10 +26,12 @@ type DeckApi = {
 
 function Field({ act }: { act: number }) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const targetEnergy = useRef(energyByAct[0]);
+  const targetMode = useRef(fieldModes[0]);
+  const transitionPulse = useRef(0);
 
   useEffect(() => {
-    targetEnergy.current = energyByAct[act] ?? energyByAct[0];
+    targetMode.current = fieldModes[act] ?? fieldModes[0];
+    transitionPulse.current = 1;
   }, [act]);
 
   useEffect(() => {
@@ -55,7 +66,7 @@ function Field({ act }: { act: number }) {
 
     const uniforms = {
       uTime: { value: 0 },
-      uEnergy: { value: targetEnergy.current },
+      uEnergy: { value: targetMode.current.energy },
       uPhase: { value: 0 },
       uColor: { value: new THREE.Color("#88e888") },
     };
@@ -97,10 +108,46 @@ function Field({ act }: { act: number }) {
     points.rotation.x = -0.1;
     scene.add(points);
 
+    const grid = new THREE.GridHelper(24, 36, 0x88e888, 0x263226);
+    const gridMaterial = grid.material as THREE.LineBasicMaterial;
+    gridMaterial.transparent = true;
+    gridMaterial.opacity = 0.1;
+    gridMaterial.depthWrite = false;
+    grid.position.set(0, -0.28, -2);
+    scene.add(grid);
+
+    const gateGroup = new THREE.Group();
+    const gates: THREE.LineLoop[] = [];
+    for (let index = 0; index < 4; index += 1) {
+      const width = 5.8 + index * 1.25;
+      const height = 3.2 + index * 0.72;
+      const gateGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-width, -height, 0),
+        new THREE.Vector3(width, -height, 0),
+        new THREE.Vector3(width, height, 0),
+        new THREE.Vector3(-width, height, 0),
+      ]);
+      const gateMaterial = new THREE.LineBasicMaterial({
+        color: 0x88e888,
+        transparent: true,
+        opacity: 0.055 + index * 0.012,
+        depthWrite: false,
+      });
+      const gate = new THREE.LineLoop(gateGeometry, gateMaterial);
+      gate.position.z = -2.5 - index * 3.2;
+      gate.userData.baseZ = gate.position.z;
+      gates.push(gate);
+      gateGroup.add(gate);
+    }
+    gateGroup.position.set(2.8, 1.25, -1);
+    gateGroup.rotation.x = -0.06;
+    scene.add(gateGroup);
+
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let frame = 0;
     let time = 0;
-    let currentEnergy = targetEnergy.current;
+    let currentEnergy = targetMode.current.energy;
+    let currentFieldZ = targetMode.current.fieldZ;
     let pointerX = 0;
     let pointerY = 0;
 
@@ -117,13 +164,27 @@ function Field({ act }: { act: number }) {
 
     const animate = () => {
       time += reducedMotion ? 0 : 0.016;
-      currentEnergy += (targetEnergy.current - currentEnergy) * 0.045;
+      const mode = targetMode.current;
+      const pulse = transitionPulse.current;
+      currentEnergy += (mode.energy + pulse * 0.28 - currentEnergy) * 0.055;
+      currentFieldZ += (mode.fieldZ - currentFieldZ) * 0.032;
+      transitionPulse.current = reducedMotion ? 0 : Math.max(0, pulse * 0.94 - 0.004);
       uniforms.uTime.value = time;
       uniforms.uEnergy.value = currentEnergy;
-      uniforms.uPhase.value += reducedMotion ? 0 : 0.0015;
+      uniforms.uPhase.value += reducedMotion ? 0 : 0.0015 + pulse * 0.016;
+      points.position.z = currentFieldZ;
       points.rotation.z += (pointerX - points.rotation.z) * 0.012;
+      grid.position.z = -2 + currentFieldZ;
+      gridMaterial.opacity = 0.055 + currentEnergy * 0.11 + pulse * 0.05;
+      gates.forEach((gate, index) => {
+        const baseZ = gate.userData.baseZ as number;
+        gate.position.z += (baseZ + pulse * (4.5 + index * 0.55) - gate.position.z) * 0.08;
+        (gate.material as THREE.LineBasicMaterial).opacity = 0.035 + index * 0.012 + pulse * 0.11;
+      });
+      gateGroup.rotation.z += (pointerX * 0.18 - gateGroup.rotation.z) * 0.012;
       camera.position.x += (pointerX * 2.2 - camera.position.x) * 0.018;
-      camera.position.y += (5.1 - pointerY * 1.5 - camera.position.y) * 0.018;
+      camera.position.y += (mode.cameraY - pointerY * 1.5 - camera.position.y) * 0.025;
+      camera.position.z += (mode.cameraZ - camera.position.z) * 0.025;
       camera.lookAt(0, -0.8, -2.2);
       renderer.render(scene, camera);
       frame = window.requestAnimationFrame(animate);
@@ -139,6 +200,12 @@ function Field({ act }: { act: number }) {
       window.removeEventListener("resize", onResize);
       geometry.dispose();
       material.dispose();
+      grid.geometry.dispose();
+      gridMaterial.dispose();
+      gates.forEach((gate) => {
+        gate.geometry.dispose();
+        (gate.material as THREE.Material).dispose();
+      });
       renderer.dispose();
       renderer.domElement.remove();
     };
@@ -170,6 +237,7 @@ export default function Home() {
   const deckRef = useRef<DeckApi | null>(null);
   const [act, setAct] = useState(0);
   const [contingency, setContingency] = useState(false);
+  const [transitionEpoch, setTransitionEpoch] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -192,13 +260,16 @@ export default function Home() {
         history: true,
         transition: "fade",
         backgroundTransition: "fade",
-        transitionSpeed: "fast",
+        transitionSpeed: "slow",
         touch: true,
         keyboard: true,
         overview: false,
         help: false,
       }) as DeckApi;
-      deck.on("slidechanged", ({ indexh }) => setAct(indexh));
+      deck.on("slidechanged", ({ indexh }) => {
+        setAct(indexh);
+        setTransitionEpoch((value) => value + 1);
+      });
       await deck.initialize();
       deckRef.current = deck;
     }
@@ -242,6 +313,11 @@ export default function Home() {
     <main className="experience" onPointerUp={navigateByClick} aria-label="Apresentação Robótica Social">
       <Field act={act} />
       <div className="noise" aria-hidden="true" />
+      <div key={transitionEpoch} className="wire-transition" aria-hidden="true">
+        <span className="wire wire-horizontal" />
+        <span className="wire wire-vertical" />
+        <span className="wire wire-frame" />
+      </div>
 
       <div ref={revealRef} className="reveal">
         <div className="slides">
