@@ -38,7 +38,7 @@ button, a { font: inherit; }
     linear-gradient(90deg, transparent 0 4.9%, rgb(136 232 136 / 0.025) 5%, transparent 5.1%),
     radial-gradient(circle at 84% 16%, rgb(136 232 136 / 0.05), transparent 29%),
     var(--ink);
-  cursor: e-resize;
+  cursor: none;
   perspective: 1400px;
 }
 
@@ -687,7 +687,7 @@ button, a { font: inherit; }
   visibility: hidden;
   transform: translateZ(-100px) scale(.98);
   transition: opacity 420ms ease, transform 620ms cubic-bezier(.2,.72,.25,1), visibility 420ms;
-  cursor: default;
+  cursor: none;
 }
 
 .contingency.is-open { opacity: 1; visibility: visible; transform: translateZ(0) scale(1); }
