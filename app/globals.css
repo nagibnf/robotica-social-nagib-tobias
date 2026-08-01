@@ -506,15 +506,40 @@ button, a { font: inherit; }
   left: 0;
   right: 0;
   bottom: 0;
+  height: 28px;
+  pointer-events: none;
+}
+
+.progress-rail::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   height: 2px;
   background: rgb(245 246 242 / .07);
 }
 
 .progress-rail span {
+  position: absolute;
+  left: 0;
+  bottom: 0;
   display: block;
-  height: 100%;
+  height: 2px;
   background: #9920c3;
+  box-shadow: 0 -1px 10px rgb(153 32 195 / .38);
   transition: width 620ms cubic-bezier(.2,.72,.25,1);
+}
+
+.progress-rail span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 22px;
+  background: linear-gradient(to top, rgb(153 32 195 / .2) 0%, rgb(153 32 195 / .06) 42%, transparent 100%);
+  pointer-events: none;
 }
 
 .contingency {
