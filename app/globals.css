@@ -13,6 +13,11 @@
   --grid-top: 64px;
   --content-top: 174px;
   --grid-bottom: 72px;
+  --slide-dur: 840ms;
+  --slide-enter-ease: cubic-bezier(.2,.72,.25,1);
+  /* Balanced exit: visible movement starts immediately, while opacity remains
+     on screen long enough for the wireframe dematerialization to read. */
+  --slide-exit-ease: cubic-bezier(.4,0,.2,1);
 }
 
 * { box-sizing: border-box; }
@@ -259,6 +264,18 @@ button, a { font: inherit; }
   pointer-events: none;
 }
 
+.wire-transition::after {
+  content: "";
+  position: absolute;
+  top: 119px;
+  left: var(--grid-x);
+  width: min(34vw, 490px);
+  height: 1px;
+  background: linear-gradient(90deg, rgb(136 232 136 / .5), transparent);
+  transform-origin: left;
+  animation: wire-horizontal calc(var(--slide-dur) * .82) 120ms var(--slide-enter-ease) both;
+}
+
 .wire {
   position: absolute;
   display: block;
@@ -273,13 +290,19 @@ button, a { font: inherit; }
   height: 84%;
   background: linear-gradient(180deg, transparent, rgb(136 232 136 / 0.65), transparent);
   transform-origin: center;
-  animation: wire-vertical 820ms 80ms cubic-bezier(.2,.72,.25,1) both;
+  animation: wire-vertical calc(var(--slide-dur) * 0.95) 70ms var(--slide-enter-ease) both;
 }
 
 @keyframes wire-vertical {
   0% { opacity: 0; transform: scaleY(.05); }
   34% { opacity: .48; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(.74); }
+}
+
+@keyframes wire-horizontal {
+  0% { opacity: 0; transform: scaleX(.02); }
+  32% { opacity: .42; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(.72); }
 }
 
 .reveal {
@@ -303,12 +326,93 @@ button, a { font: inherit; }
 .reveal .slides section { padding: 0; transform-style: preserve-3d; }
 .reveal .slides section.present { display: block; }
 
+/* Reveal marks the old slide hidden and opacity: 0 at navigation time. The
+   temporary state set by the deck keeps that one frame paintable while its
+   exit animation runs; older history remains hidden. */
+.reveal .slides > section.is-exiting {
+  display: block !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: none;
+}
+
+.reveal .slides > section.is-exiting .act-frame {
+  animation: slide-frame-exit var(--slide-dur) var(--slide-exit-ease) both;
+}
+
+.reveal .slides > section.is-exiting :is(
+  .act-label,
+  .support,
+  .micro,
+  .technical-strip,
+  .state-readout,
+  .counter-impact,
+  .limit-strip,
+  .preclose,
+  .closing-meta
+) {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.reveal .slides > section.is-exiting :is(
+  .technical-strip p,
+  .state-readout p,
+  .limit-strip p,
+  .closing-meta > *
+) {
+  animation: detail-dematerialize 440ms
+    var(--motion-out-delay, 0ms)
+    var(--slide-exit-ease) both;
+}
+
+@keyframes slide-frame-exit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  55% {
+    opacity: .9;
+    transform: translate3d(0, -4px, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -12px, 0);
+  }
+}
+
+/* Reveal's bundled fade rule pins sections to `transition: opacity .5s;
+   transform: none` at higher specificity, which made these depth transforms
+   dead code and cut child animations mid-flight at the 500ms mark. This
+   same-specificity override puts the section on the shared slide timeline;
+   destination states switch to the exit ease. */
+.reveal.fade .slides section:not([data-transition]) {
+  backface-visibility: hidden;
+  transition:
+    opacity var(--slide-dur) var(--slide-enter-ease),
+    transform var(--slide-dur) var(--slide-enter-ease);
+}
+
+.reveal.fade .slides section.past,
+.reveal.fade .slides section.future {
+  transition-timing-function: var(--slide-exit-ease);
+}
+
 .reveal.fade .slides section.past {
-  transform: translate3d(0, -2.5%, 150px) scale(1.035);
+  transform: translate3d(0, -2%, 70px) scale(1.015) !important;
 }
 
 .reveal.fade .slides section.future {
-  transform: translate3d(0, 3.5%, -220px) scale(.94);
+  transform: translate3d(0, 2%, -70px) scale(.985) !important;
+}
+
+/* The explicit exit animation owns outgoing geometry. This rule must follow
+   the generic past/future depth states so the frame begins exactly where the
+   presented slide was, without a one-frame scale/position jump. */
+.reveal.fade .slides > section.is-exiting {
+  opacity: 1 !important;
+  transform: none !important;
 }
 
 .act-frame {
@@ -329,6 +433,14 @@ button, a { font: inherit; }
   background: var(--faint);
 }
 
+.present .act-frame::after {
+  animation: grid-tick-in 620ms 140ms var(--slide-enter-ease) both;
+}
+
+.is-exiting .act-frame::after {
+  animation: grid-tick-out 360ms var(--slide-exit-ease) both;
+}
+
 .act-label,
 .support,
 .micro,
@@ -339,9 +451,8 @@ button, a { font: inherit; }
 .preclose,
 .closing-meta {
   transition:
-    opacity 620ms cubic-bezier(.2,.72,.25,1),
-    transform 820ms cubic-bezier(.2,.72,.25,1),
-    clip-path 820ms cubic-bezier(.2,.72,.25,1);
+    opacity var(--slide-dur) var(--slide-enter-ease),
+    transform var(--slide-dur) var(--slide-enter-ease);
 }
 
 .future .act-label,
@@ -354,7 +465,8 @@ button, a { font: inherit; }
 .future .preclose,
 .future .closing-meta {
   opacity: 0;
-  transform: translate3d(0, 26px, -80px);
+  transform: translate3d(0, 20px, -40px);
+  transition-timing-function: var(--slide-exit-ease);
 }
 
 .past .act-label,
@@ -367,18 +479,19 @@ button, a { font: inherit; }
 .past .preclose,
 .past .closing-meta {
   opacity: 0;
-  transform: translate3d(0, -18px, 80px);
+  transform: translate3d(0, -14px, 40px);
+  transition-timing-function: var(--slide-exit-ease);
 }
 
 .future .impact {
   opacity: 0;
   color: transparent;
   -webkit-text-stroke: 1px rgb(243 245 240 / .34);
-  transform: translate3d(0, 34px, -170px) rotateX(-13deg) scale(.975);
+  transform: translate3d(0, 28px, -110px) rotateX(-8deg) scale(.98);
 }
 
 .past .impact {
-  animation: title-dematerialize 680ms cubic-bezier(.45,0,.55,1) both;
+  animation: title-dematerialize var(--slide-dur) var(--slide-exit-ease) both;
 }
 
 .future .impact span {
@@ -387,15 +500,15 @@ button, a { font: inherit; }
 }
 
 .present .impact {
-  animation: title-materialize 880ms 90ms cubic-bezier(.2,.72,.25,1) both;
+  animation: title-materialize var(--slide-dur) 110ms var(--slide-enter-ease) both;
 }
 
 .present .impact span {
-  animation: accent-materialize 880ms 90ms cubic-bezier(.2,.72,.25,1) both;
+  animation: accent-materialize var(--slide-dur) 110ms var(--slide-enter-ease) both;
 }
 
 .past .impact span {
-  animation: accent-dematerialize 680ms cubic-bezier(.45,0,.55,1) both;
+  animation: accent-dematerialize var(--slide-dur) var(--slide-exit-ease) both;
 }
 
 @keyframes title-materialize {
@@ -403,8 +516,9 @@ button, a { font: inherit; }
     opacity: 0;
     color: transparent;
     -webkit-text-stroke: 1px rgb(243 245 240 / .3);
+    font-variation-settings: "wght" 500;
     text-shadow: 0 0 14px rgb(136 232 136 / .08);
-    transform: translate3d(0, 34px, -170px) rotateX(-13deg) scale(.975);
+    transform: translate3d(0, 28px, -110px) rotateX(-8deg) scale(.98);
   }
   38% {
     opacity: .82;
@@ -420,6 +534,7 @@ button, a { font: inherit; }
     opacity: 1;
     color: var(--paper);
     -webkit-text-stroke: 0 transparent;
+    font-variation-settings: "wght" 610;
     text-shadow: none;
     transform: translate3d(0, 0, 0) rotateX(0) scale(1);
   }
@@ -441,7 +556,7 @@ button, a { font: inherit; }
     color: var(--accent);
     -webkit-text-stroke: 0 transparent;
   }
-  38% {
+  28% {
     color: transparent;
     -webkit-text-stroke: 1px rgb(136 232 136 / .72);
   }
@@ -456,10 +571,11 @@ button, a { font: inherit; }
     opacity: 1;
     color: var(--paper);
     -webkit-text-stroke: 0 transparent;
+    font-variation-settings: "wght" 610;
     transform: translate3d(0, 0, 0) rotateX(0) scale(1);
   }
-  36% {
-    opacity: .88;
+  24% {
+    opacity: .92;
     color: transparent;
     -webkit-text-stroke: 1px rgb(243 245 240 / .68);
   }
@@ -467,19 +583,114 @@ button, a { font: inherit; }
     opacity: 0;
     color: transparent;
     -webkit-text-stroke: 1px rgb(136 232 136 / .18);
-    transform: translate3d(0, -28px, 140px) rotateX(12deg) scale(1.025);
+    font-variation-settings: "wght" 520;
+    transform: translate3d(0, -4px, 0);
   }
 }
 
-.present .act-label { transition-delay: 100ms; }
+.present .act-label { transition-delay: 120ms; }
 .present .support,
-.present .preclose { transition-delay: 260ms; }
+.present .preclose { transition-delay: 200ms; }
 .present .micro,
 .present .counter-impact,
 .present .technical-strip,
 .present .state-readout,
 .present .limit-strip,
-.present .closing-meta { transition-delay: 340ms; }
+.present .closing-meta { transition-delay: 280ms; }
+
+.present :is(
+  .technical-strip p,
+  .state-readout p,
+  .limit-strip p,
+  .closing-meta > *
+) {
+  animation: detail-materialize 620ms
+    var(--motion-in-delay, 320ms)
+    var(--slide-enter-ease) both;
+}
+
+:is(
+  .technical-strip,
+  .state-readout,
+  .limit-strip,
+  .closing-meta
+) > :nth-child(1) {
+  --motion-in-delay: 320ms;
+  --motion-out-delay: 0ms;
+}
+
+:is(
+  .technical-strip,
+  .state-readout,
+  .limit-strip,
+  .closing-meta
+) > :nth-child(2) {
+  --motion-in-delay: 374ms;
+  --motion-out-delay: 28ms;
+}
+
+:is(
+  .technical-strip,
+  .state-readout,
+  .limit-strip,
+  .closing-meta
+) > :nth-child(3) {
+  --motion-in-delay: 428ms;
+  --motion-out-delay: 56ms;
+}
+
+:is(
+  .technical-strip,
+  .state-readout,
+  .limit-strip,
+  .closing-meta
+) > :nth-child(4) {
+  --motion-in-delay: 482ms;
+  --motion-out-delay: 84ms;
+}
+
+:is(
+  .technical-strip,
+  .state-readout,
+  .limit-strip,
+  .closing-meta
+) > :nth-child(5) {
+  --motion-in-delay: 536ms;
+  --motion-out-delay: 112ms;
+}
+
+@keyframes detail-materialize {
+  0% {
+    opacity: 0;
+    transform: translate3d(12px, 8px, -22px);
+  }
+  45% { opacity: .45; }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes detail-dematerialize {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-8px, -5px, 0);
+  }
+}
+
+@keyframes grid-tick-in {
+  0% { opacity: 0; transform: scaleX(0); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes grid-tick-out {
+  0% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(.18); }
+}
 
 .act-label {
   position: absolute;
@@ -845,6 +1056,13 @@ button, a { font: inherit; }
   .reveal .slides section *,
   .progress-rail span,
   .contingency { transition: none !important; animation: none !important; }
+
+  .reveal .slides section .act-frame::after {
+    animation: none !important;
+  }
+
+  .reveal .slides section.past,
+  .reveal .slides section.future { transform: none; }
 
   .future .impact,
   .past .impact,

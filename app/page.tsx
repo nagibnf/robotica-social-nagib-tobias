@@ -7,6 +7,7 @@ import { formatTelemetryValue, type RobotTelemetry } from "./prs-live";
 import { usePrsLive } from "./use-prs-live";
 
 const ACTS = 8;
+const SLIDE_TRANSITION_MS = 840;
 
 const fieldModes = [
   { energy: 0.34, cameraY: 5.1, cameraZ: 10.8, fieldZ: 0.0 },
@@ -24,7 +25,13 @@ type DeckApi = {
   destroy: () => void;
   next: () => void;
   prev: () => void;
-  on: (event: string, handler: (event: { indexh: number }) => void) => void;
+  on: (
+    event: string,
+    handler: (event: {
+      indexh: number;
+      previousSlide?: HTMLElement;
+    }) => void,
+  ) => void;
 };
 
 function Field({ act }: { act: number }) {
@@ -259,6 +266,7 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false;
+    const exitTimers = new Set<number>();
 
     async function startDeck() {
       if (!revealRef.current || deckRef.current) return;
@@ -278,13 +286,29 @@ export default function Home() {
         history: true,
         transition: "fade",
         backgroundTransition: "fade",
-        transitionSpeed: "slow",
         touch: true,
         keyboard: true,
         overview: false,
         help: false,
       }) as DeckApi;
-      deck.on("slidechanged", ({ indexh }) => {
+      deck.on("slidechanged", ({ indexh, previousSlide }) => {
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (previousSlide && !reducedMotion) {
+          // Reveal marks the old slide hidden immediately. Keep it paintable
+          // until its CSS exit finishes, then restore the inactive state.
+          previousSlide.classList.add("is-exiting");
+          previousSlide.hidden = false;
+          previousSlide.removeAttribute("aria-hidden");
+          const timer = window.setTimeout(() => {
+            exitTimers.delete(timer);
+            previousSlide.classList.remove("is-exiting");
+            if (!previousSlide.classList.contains("present")) {
+              previousSlide.hidden = true;
+              previousSlide.setAttribute("aria-hidden", "true");
+            }
+          }, SLIDE_TRANSITION_MS);
+          exitTimers.add(timer);
+        }
         setAct(indexh);
         setTransitionEpoch((value) => value + 1);
       });
@@ -295,6 +319,7 @@ export default function Home() {
     startDeck();
     return () => {
       cancelled = true;
+      exitTimers.forEach((timer) => window.clearTimeout(timer));
       deckRef.current?.destroy();
       deckRef.current = null;
     };
