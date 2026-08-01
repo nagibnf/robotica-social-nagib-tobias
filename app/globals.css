@@ -78,8 +78,8 @@ button, a { font: inherit; }
 .activity-feed__block {
   position: absolute;
   right: 4%;
-  /* Align spawn with slide bottom copy (~98–112px), a bit higher so it reads. */
-  bottom: calc(112px + 4vh);
+  /* Align near slide bottom copy, nudged up so spawn stays readable. */
+  bottom: calc(112px + 10vh);
   width: min(40rem, 96%);
   margin: 0;
   padding: 0;
@@ -129,12 +129,12 @@ button, a { font: inherit; }
   7% {
     opacity: .58;
   }
-  78% {
+  72% {
     opacity: .26;
   }
   100% {
     opacity: 0;
-    transform: translate3d(0, -68vh, -640px) scale(0.22);
+    transform: translate3d(0, -76vh, -640px) scale(0.22);
   }
 }
 
@@ -679,7 +679,7 @@ button, a { font: inherit; }
   .activity-feed { inset: 16% 2% -8% 18%; perspective-origin: 82% 42%; }
   .activity-feed__block {
     right: 3%;
-    bottom: calc(96px + 3vh);
+    bottom: calc(96px + 8vh);
     width: min(34rem, 96%);
     font-size: 13px;
   }
