@@ -314,9 +314,7 @@ export default function Home() {
       <Field act={act} />
       <div className="noise" aria-hidden="true" />
       <div key={transitionEpoch} className="wire-transition" aria-hidden="true">
-        <span className="wire wire-horizontal" />
         <span className="wire wire-vertical" />
-        <span className="wire wire-frame" />
       </div>
 
       <div ref={revealRef} className="reveal">
