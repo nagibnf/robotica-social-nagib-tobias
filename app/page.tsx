@@ -215,8 +215,32 @@ function Field({ act }: { act: number }) {
   return <div ref={mountRef} className="field" aria-hidden="true" />;
 }
 
-function ActLabel({ children }: { children: React.ReactNode }) {
-  return <p className="act-label">{children}</p>;
+type RobotTelemetry = {
+  batteryPct: number;
+  cpuPct: number;
+  tempC: number;
+  ramUsedGb: number;
+  ramTotalGb: number;
+};
+
+/** Mock — swap for live Tobias telemetry later. */
+const MOCK_TELEMETRY: RobotTelemetry = {
+  batteryPct: 78,
+  cpuPct: 34,
+  tempC: 41.2,
+  ramUsedGb: 1.4,
+  ramTotalGb: 4,
+};
+
+function TelemetryBar({ data = MOCK_TELEMETRY }: { data?: RobotTelemetry }) {
+  return (
+    <div className="telemetry" aria-label="Telemetria do Tobias">
+      <span><b>BATERIA</b> {data.batteryPct}%</span>
+      <span><b>CPU</b> {data.cpuPct}%</span>
+      <span><b>TEMP</b> {data.tempC.toFixed(1)}°C</span>
+      <span><b>RAM</b> {data.ramUsedGb.toFixed(1)} / {data.ramTotalGb} GB</span>
+    </div>
+  );
 }
 
 function DeckSlide({
@@ -322,20 +346,17 @@ export default function Home() {
       <div ref={revealRef} className="reveal">
         <div className="slides">
           <DeckSlide className="act act-opening">
-            <ActLabel>PAINEL / NAGIB × TOBIAS</ActLabel>
             <h1 className="impact impact-hero">ROBÓTICA<br />SOCIAL</h1>
             <p className="support support-accent">DO CORPO À PRESENÇA</p>
             <p className="micro micro-right">DOIS PARTICIPANTES.<br />UMA RELAÇÃO EM TEMPO REAL.</p>
           </DeckSlide>
 
           <DeckSlide className="act act-presence">
-            <ActLabel>01 / PRESENÇA</ActLabel>
             <h2 className="impact impact-wide">CORPO <span>≠</span><br />PRESENÇA</h2>
             <p className="support support-bottom">ESTAR NO AMBIENTE <span>≠</span> PARTICIPAR DO AMBIENTE</p>
           </DeckSlide>
 
           <DeckSlide className="act act-architecture">
-            <ActLabel>02 / ARQUITETURA</ActLabel>
             <h2 className="impact impact-stack">PERCEBER.<br />ORQUESTRAR.<br /><span>EXPRESSAR.</span></h2>
             <div className="technical-strip" aria-label="Camadas do PRS">
               <p><b>PERCEPÇÃO</b><br />voz · visão · sensores · distância</p>
@@ -345,7 +366,6 @@ export default function Home() {
           </DeckSlide>
 
           <DeckSlide className="act act-state">
-            <ActLabel>03 / ESTADO</ActLabel>
             <h2 className="impact impact-wide">PRESENÇA<br /><span>É ESTADO.</span></h2>
             <div className="state-readout" aria-label="Estado do Tobias">
               <p><b>INTERLOCUTOR</b><span>NAGIB</span></p>
@@ -357,19 +377,16 @@ export default function Home() {
           </DeckSlide>
 
           <DeckSlide className="act act-question">
-            <ActLabel>04 / RELAÇÃO</ActLabel>
             <h2 className="impact impact-question">QUANDO COMEÇAMOS<br />A TRATAR UMA MÁQUINA<br /><span>COMO ALGUÉM?</span></h2>
           </DeckSlide>
 
           <DeckSlide className="act act-value">
-            <ActLabel>05 / VALOR</ActLabel>
             <h2 className="impact impact-wide">ATENÇÃO<br />É FÁCIL.</h2>
             <p className="counter-impact">RELAÇÃO<br /><span>É DIFÍCIL.</span></p>
             <p className="micro micro-left">PRESENÇA ADICIONA VALOR<br />QUANDO CRIA CONTINUIDADE.</p>
           </DeckSlide>
 
           <DeckSlide className="act act-limits">
-            <ActLabel>06 / LIMITES</ActLabel>
             <h2 className="impact impact-wide">TODA PRESENÇA<br /><span>PRECISA DE LIMITES.</span></h2>
             <div className="limit-strip" aria-label="Camadas de risco">
               <p>01 / FÍSICO</p>
@@ -379,7 +396,6 @@ export default function Home() {
           </DeckSlide>
 
           <DeckSlide className="act act-closing">
-            <ActLabel>07 / ENCERRAMENTO</ActLabel>
             <p className="preclose">A PERGUNTA NÃO É SE A IA TERÁ UM CORPO.</p>
             <h2 className="impact impact-closing">QUE RELAÇÕES<br />VAMOS <span>PROJETAR?</span></h2>
             <div className="closing-meta">
@@ -390,6 +406,8 @@ export default function Home() {
           </DeckSlide>
         </div>
       </div>
+
+      <TelemetryBar />
 
       <div className="deck-chrome" aria-hidden="true">
         <span>{String(act + 1).padStart(2, "0")} / {String(ACTS).padStart(2, "0")}</span>

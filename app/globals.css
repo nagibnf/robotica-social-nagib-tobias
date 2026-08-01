@@ -78,8 +78,8 @@ button, a { font: inherit; }
 .activity-feed__block {
   position: absolute;
   right: 4%;
-  /* Align near slide bottom copy, nudged up so spawn stays readable. */
-  bottom: calc(112px + 10vh);
+  /* Raised so feed clears bottom chrome / slide support copy. */
+  bottom: calc(112px + 17vh);
   width: min(40rem, 96%);
   margin: 0;
   padding: 0;
@@ -404,6 +404,36 @@ button, a { font: inherit; }
   font-weight: 700;
 }
 
+.telemetry {
+  position: fixed;
+  z-index: 5;
+  top: var(--grid-top);
+  left: var(--grid-x);
+  right: var(--grid-x);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: .04em;
+  font-weight: 400;
+  pointer-events: none;
+}
+
+.telemetry b {
+  margin-right: .45em;
+  color: rgb(146 154 145 / .72);
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.telemetry span {
+  white-space: nowrap;
+}
+
 .impact,
 .reveal h1,
 .reveal h2 {
@@ -693,9 +723,14 @@ button, a { font: inherit; }
   .activity-feed { inset: 16% 2% -8% 18%; perspective-origin: 82% 42%; }
   .activity-feed__block {
     right: 3%;
-    bottom: calc(96px + 8vh);
+    bottom: calc(96px + 14vh);
     width: min(34rem, 96%);
     font-size: 13px;
+  }
+
+  .telemetry {
+    gap: 8px 16px;
+    font-size: 10px;
   }
 }
 
