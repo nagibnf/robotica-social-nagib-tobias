@@ -17,7 +17,7 @@ const fieldModes = [
 ];
 
 type DeckApi = {
-  initialize: () => Promise<void>;
+  initialize: () => Promise<unknown>;
   destroy: () => void;
   next: () => void;
   prev: () => void;
