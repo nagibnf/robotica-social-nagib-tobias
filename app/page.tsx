@@ -42,6 +42,8 @@ function Field({ act }: { act: number }) {
     if (!mount) return;
 
     const scene = new THREE.Scene();
+    // Fog color matches --ink so fogged lines blend into the page background.
+    scene.fog = new THREE.Fog(0x080a08, 16, 40);
     const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(0, 5.1, 10.8);
     camera.lookAt(0, -0.8, -2.2);
@@ -52,15 +54,17 @@ function Field({ act }: { act: number }) {
     renderer.setClearColor(0x000000, 0);
     mount.appendChild(renderer.domElement);
 
-    const columns = 62;
-    const rows = 40;
+    // Oversized plane + radial shader fade so the dot field dissolves before
+    // its geometric edges ever enter the frame.
+    const columns = 176;
+    const rows = 112;
     const positions = new Float32Array(columns * rows * 3);
     let pointer = 0;
     for (let z = 0; z < rows; z += 1) {
       for (let x = 0; x < columns; x += 1) {
-        positions[pointer++] = (x / (columns - 1) - 0.5) * 22;
+        positions[pointer++] = (x / (columns - 1) - 0.5) * 64;
         positions[pointer++] = 0;
-        positions[pointer++] = (z / (rows - 1) - 0.5) * 22 - 2;
+        positions[pointer++] = (z / (rows - 1) - 0.5) * 64 - 2;
       }
     }
 
@@ -92,7 +96,8 @@ function Field({ act }: { act: number }) {
           vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
           gl_Position = projectionMatrix * mvPosition;
           gl_PointSize = (1.7 + uEnergy * 2.2) * (180.0 / -mvPosition.z);
-          vAlpha = 0.18 + smoothstep(-12.0, 7.0, p.z) * 0.55;
+          float horizon = 1.0 - smoothstep(13.0, 29.0, length(p.xz - vec2(0.0, -2.0)));
+          vAlpha = (0.18 + smoothstep(-26.0, 7.0, p.z) * 0.55) * horizon;
         }
       `,
       fragmentShader: `
@@ -111,7 +116,7 @@ function Field({ act }: { act: number }) {
     points.rotation.x = -0.1;
     scene.add(points);
 
-    const grid = new THREE.GridHelper(24, 36, 0x88e888, 0x263226);
+    const grid = new THREE.GridHelper(64, 96, 0x88e888, 0x263226);
     const gridMaterial = grid.material as THREE.LineBasicMaterial;
     gridMaterial.transparent = true;
     gridMaterial.opacity = 0.1;
@@ -135,6 +140,7 @@ function Field({ act }: { act: number }) {
         transparent: true,
         opacity: 0.055 + index * 0.012,
         depthWrite: false,
+        fog: false,
       });
       const gate = new THREE.LineLoop(gateGeometry, gateMaterial);
       gate.position.z = -2.5 - index * 3.2;
