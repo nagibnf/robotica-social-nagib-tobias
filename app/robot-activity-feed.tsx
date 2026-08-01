@@ -33,28 +33,30 @@ const KIND_LABEL: Record<RobotActivityKind, string> = {
   perception: "PERCEPÇÃO",
 };
 
+const CYCLE_S = 36;
+
 type RobotActivityFeedProps = {
   entries?: RobotActivityEntry[];
 };
 
 export function RobotActivityFeed({ entries = MOCK_ROBOT_ACTIVITY }: RobotActivityFeedProps) {
-  const loop = [...entries, ...entries];
+  const count = entries.length;
+  const step = CYCLE_S / Math.max(count, 1);
 
   return (
-    <div className="activity-feed" aria-hidden="true">
+    <div className="activity-feed" aria-hidden="true" style={{ ["--cycle" as string]: `${CYCLE_S}s` }}>
       <div className="activity-feed__viewport">
-        <div className="activity-feed__track">
-          {loop.map((entry, index) => (
-            <article
-              key={`${entry.id}-${index}`}
-              className={`activity-feed__block activity-feed__block--${entry.kind}`}
-            >
-              <p className="activity-feed__kind">{KIND_LABEL[entry.kind]}</p>
-              <p className="activity-feed__headline">{entry.headline}</p>
-              {entry.body ? <p className="activity-feed__body">{entry.body}</p> : null}
-            </article>
-          ))}
-        </div>
+        {entries.map((entry, index) => (
+          <article
+            key={entry.id}
+            className={`activity-feed__block activity-feed__block--${entry.kind}`}
+            style={{ animationDelay: `${-index * step}s` }}
+          >
+            <p className="activity-feed__kind">{KIND_LABEL[entry.kind]}</p>
+            <p className="activity-feed__headline">{entry.headline}</p>
+            {entry.body ? <p className="activity-feed__body">{entry.body}</p> : null}
+          </article>
+        ))}
       </div>
     </div>
   );
