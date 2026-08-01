@@ -129,12 +129,12 @@ button, a { font: inherit; }
   7% {
     opacity: .58;
   }
-  72% {
+  68% {
     opacity: .26;
   }
   100% {
     opacity: 0;
-    transform: translate3d(0, -76vh, -640px) scale(0.22);
+    transform: translate3d(0, -84vh, -680px) scale(0.2);
   }
 }
 
