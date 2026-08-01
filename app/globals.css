@@ -513,7 +513,7 @@ button, a { font: inherit; }
 .progress-rail span {
   display: block;
   height: 100%;
-  background: var(--accent);
+  background: #9920c3;
   transition: width 620ms cubic-bezier(.2,.72,.25,1);
 }
 
