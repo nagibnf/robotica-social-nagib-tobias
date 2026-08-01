@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { RobotActivityFeed } from "./robot-activity-feed";
 
 const ACTS = 8;
 
@@ -312,6 +313,7 @@ export default function Home() {
   return (
     <main className="experience" onPointerUp={navigateByClick} aria-label="Apresentação Robótica Social">
       <Field act={act} />
+      <RobotActivityFeed />
       <div className="noise" aria-hidden="true" />
       <div key={transitionEpoch} className="wire-transition" aria-hidden="true">
         <span className="wire wire-vertical" />
