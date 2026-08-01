@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { RobotActivityFeed } from "./robot-activity-feed";
+import { formatTelemetryValue, type RobotTelemetry } from "./prs-live";
+import { usePrsLive } from "./use-prs-live";
 
 const ACTS = 8;
 
@@ -215,30 +217,14 @@ function Field({ act }: { act: number }) {
   return <div ref={mountRef} className="field" aria-hidden="true" />;
 }
 
-type RobotTelemetry = {
-  batteryPct: number;
-  cpuPct: number;
-  tempC: number;
-  ramUsedGb: number;
-  ramTotalGb: number;
-};
-
-/** Mock — swap for live Tobias telemetry later. */
-const MOCK_TELEMETRY: RobotTelemetry = {
-  batteryPct: 78,
-  cpuPct: 34,
-  tempC: 41.2,
-  ramUsedGb: 1.4,
-  ramTotalGb: 4,
-};
-
-function TelemetryBar({ data = MOCK_TELEMETRY }: { data?: RobotTelemetry }) {
+function TelemetryBar({ data }: { data: RobotTelemetry }) {
+  const stale = data.stale ? " telemetry--stale" : "";
   return (
-    <div className="telemetry" aria-label="Telemetria do Tobias">
-      <span><b>BATERIA</b> {data.batteryPct}%</span>
-      <span><b>CPU</b> {data.cpuPct}%</span>
-      <span><b>TEMP</b> {data.tempC.toFixed(1)}°C</span>
-      <span><b>RAM</b> {data.ramUsedGb.toFixed(1)} / {data.ramTotalGb} GB</span>
+    <div className={`telemetry${stale}`} aria-label="Telemetria do Tobias">
+      <span><b>BATERIA</b> {formatTelemetryValue(data.batteryPct)}%</span>
+      <span><b>CPU</b> {formatTelemetryValue(data.cpuPct)}%</span>
+      <span><b>TEMP</b> {formatTelemetryValue(data.tempC, 1)}°C</span>
+      <span><b>RAM</b> {formatTelemetryValue(data.ramPct)}%</span>
     </div>
   );
 }
@@ -263,15 +249,16 @@ export default function Home() {
   const [act, setAct] = useState(0);
   const [contingency, setContingency] = useState(false);
   const [transitionEpoch, setTransitionEpoch] = useState(0);
+  const prs = usePrsLive();
 
   useEffect(() => {
     let cancelled = false;
 
     async function startDeck() {
       if (!revealRef.current || deckRef.current) return;
-      const module = await import("reveal.js");
+      const revealModule = await import("reveal.js");
       if (cancelled || !revealRef.current) return;
-      const Reveal = module.default;
+      const Reveal = revealModule.default;
       const deck = new Reveal(revealRef.current, {
         width: 1440,
         height: 810,
@@ -318,8 +305,11 @@ export default function Home() {
       }
       if (event.key.toLowerCase() === "f") {
         event.preventDefault();
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
-        else document.exitFullscreen?.();
+        if (!document.fullscreenElement) {
+          void document.documentElement.requestFullscreen?.().catch(() => {});
+        } else {
+          void document.exitFullscreen?.().catch(() => {});
+        }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -337,7 +327,7 @@ export default function Home() {
   return (
     <main className="experience" onPointerUp={navigateByClick} aria-label="Apresentação Robótica Social">
       <Field act={act} />
-      <RobotActivityFeed />
+      <RobotActivityFeed entries={prs.entries} />
       <div className="noise" aria-hidden="true" />
       <div key={transitionEpoch} className="wire-transition" aria-hidden="true">
         <span className="wire wire-vertical" />
@@ -407,7 +397,7 @@ export default function Home() {
         </div>
       </div>
 
-      <TelemetryBar />
+      <TelemetryBar data={prs.telemetry} />
 
       <div className="deck-chrome" aria-hidden="true">
         <span>{String(act + 1).padStart(2, "0")} / {String(ACTS).padStart(2, "0")}</span>

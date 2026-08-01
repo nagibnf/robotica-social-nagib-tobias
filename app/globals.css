@@ -95,6 +95,32 @@ button, a { font: inherit; }
   animation: activity-feed-rise var(--cycle, 36s) linear infinite;
 }
 
+/* Live: outer shell bumps up on stack; inner lift rises into depth and fades out. */
+.activity-feed__block--live {
+  animation: none;
+  transform: translate3d(
+    0,
+    calc(var(--push, 0) * var(--line-step, 2.28vh) * -1),
+    calc(var(--push, 0) * -18px)
+  );
+  transition: transform 1.05s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.activity-feed__block--live .activity-feed__lift {
+  animation: activity-feed-rise var(--cycle, 22s) linear forwards;
+}
+
+.activity-feed__block--live .activity-feed__sway {
+  animation: activity-feed-sway-subtle 5.8s ease-in-out infinite;
+}
+
+.activity-feed__lift {
+  transform-origin: right center;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  animation: activity-feed-rise var(--cycle, 22s) linear forwards;
+}
+
 .activity-feed__sway {
   transform-origin: right center;
   will-change: transform;
@@ -108,10 +134,66 @@ button, a { font: inherit; }
   letter-spacing: .12em;
 }
 
+.activity-feed__block--emotion .activity-feed__kind {
+  color: rgb(255 176 112 / .72);
+}
+
+.activity-feed__block--gesture .activity-feed__kind {
+  color: rgb(153 32 195 / .78);
+}
+
+.activity-feed__block--audio .activity-feed__kind {
+  color: rgb(88 214 196 / .72);
+}
+
+.activity-feed__block--memory .activity-feed__kind {
+  color: rgb(130 168 223 / .72);
+}
+
+.activity-feed__block--web .activity-feed__kind {
+  color: rgb(126 201 126 / .72);
+}
+
+.activity-feed__block--locomotion .activity-feed__kind {
+  color: rgb(232 120 64 / .74);
+}
+
+.activity-feed__block--action .activity-feed__kind {
+  color: rgb(245 246 242 / .42);
+}
+
+.activity-feed__block--speak .activity-feed__kind {
+  color: rgb(136 232 136 / .72);
+}
+
+.activity-feed__block--utterance .activity-feed__kind {
+  color: rgb(245 246 242 / .55);
+}
+
+.activity-feed__block--vision .activity-feed__kind {
+  color: rgb(180 200 255 / .68);
+}
+
+.activity-feed__vision {
+  display: block;
+  margin: 6px 0 0 auto;
+  max-width: min(9rem, 100%);
+  max-height: 5.5rem;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 2px;
+  opacity: 0.78;
+}
+
 .activity-feed__headline {
   margin: 0;
   color: rgb(245 246 242 / .5);
   font-size: 1em;
+  line-height: 1.42;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 100%;
 }
 
 .activity-feed__body {
@@ -150,6 +232,12 @@ button, a { font: inherit; }
   22% { transform: translate3d(14px, -2px, 0); }
   48% { transform: translate3d(-11px, 1px, 0); }
   74% { transform: translate3d(9px, -1px, 0); }
+}
+
+/* Live stack: gentler sway so cards drift apart less while pushed. */
+@keyframes activity-feed-sway-subtle {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(5px, -1px, 0); }
 }
 
 .noise {
@@ -432,6 +520,10 @@ button, a { font: inherit; }
 
 .telemetry span {
   white-space: nowrap;
+}
+
+.telemetry--stale {
+  color: rgb(146 154 145 / .55);
 }
 
 .impact,

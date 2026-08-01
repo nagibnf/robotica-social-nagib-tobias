@@ -1,0 +1,17 @@
+services:
+  presentation:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_PRS_LIVE: "1"
+        NEXT_PUBLIC_PRS_PROXY_PORT: "3010"
+    ports:
+      - "${PRESENTATION_PORT:-3000}:3000"
+      - "${PRS_PROXY_PORT:-3010}:3010"
+    environment:
+      PRS_HOST: ${PRS_HOST:-http://100.91.252.69:8080}
+      PRS_PROXY_PORT: ${PRS_PROXY_PORT:-3010}
+      PRS_PROXY_BIND: 0.0.0.0
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    restart: unless-stopped

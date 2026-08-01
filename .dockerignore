@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+dist
+.git
+.github
+.wrangler
+.cursor
+**/*.md
+!README.md
+tsconfig.tsbuildinfo
+.env
+.env.*
+!.env.example

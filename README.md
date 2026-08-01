@@ -30,3 +30,28 @@ npm run build:pages
 ```
 
 O build estático é escrito em `out/`.
+
+## Docker (máquina de apresentação)
+
+Deck em produção com proxy PRS para SSE ao vivo. Ajuste o host do PRS via
+variável de ambiente.
+
+```bash
+cp .env.example .env
+# edite PRS_HOST se o backend PRS mudar de IP/host
+
+docker compose up --build
+```
+
+Abra `http://<ip-da-máquina>:3000`. O browser usa a porta **3010** no mesmo
+host para streams SSE (evita buffer do Next). Garanta que a máquina alcança
+`PRS_HOST` (ex.: Tailscale).
+
+Sem Compose, só imagem:
+
+```bash
+docker build -t robotica-social-deck .
+docker run --rm -p 3000:3000 -p 3010:3010 \
+  -e PRS_HOST=http://100.91.252.69:8080 \
+  robotica-social-deck
+```
