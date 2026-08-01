@@ -95,6 +95,12 @@ button, a { font: inherit; }
   animation: activity-feed-rise var(--cycle, 36s) linear infinite;
 }
 
+.activity-feed__sway {
+  transform-origin: right center;
+  will-change: transform;
+  animation: activity-feed-sway 5.8s ease-in-out infinite;
+}
+
 .activity-feed__kind {
   margin: 0 0 5px;
   color: rgb(153 32 195 / .58);
@@ -136,6 +142,14 @@ button, a { font: inherit; }
     opacity: 0;
     transform: translate3d(0, -84vh, -680px) scale(0.2);
   }
+}
+
+/* Soft lateral drift, same family as the field particle sway. */
+@keyframes activity-feed-sway {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  22% { transform: translate3d(14px, -2px, 0); }
+  48% { transform: translate3d(-11px, 1px, 0); }
+  74% { transform: translate3d(9px, -1px, 0); }
 }
 
 .noise {
@@ -692,6 +706,8 @@ button, a { font: inherit; }
     opacity: .32;
     transform: translate3d(0, -28vh, -220px) scale(0.72);
   }
+
+  .activity-feed__sway { animation: none; }
 
   .activity-feed__block:nth-child(3n) { transform: translate3d(0, -14vh, -90px) scale(0.95); }
   .activity-feed__block:nth-child(3n + 1) { transform: translate3d(0, -42vh, -360px) scale(0.48); opacity: .18; }

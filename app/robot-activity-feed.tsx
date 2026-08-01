@@ -52,9 +52,14 @@ export function RobotActivityFeed({ entries = MOCK_ROBOT_ACTIVITY }: RobotActivi
             className={`activity-feed__block activity-feed__block--${entry.kind}`}
             style={{ animationDelay: `${-index * step}s` }}
           >
-            <p className="activity-feed__kind">{KIND_LABEL[entry.kind]}</p>
-            <p className="activity-feed__headline">{entry.headline}</p>
-            {entry.body ? <p className="activity-feed__body">{entry.body}</p> : null}
+            <div
+              className="activity-feed__sway"
+              style={{ animationDelay: `${-(index * 0.73)}s` }}
+            >
+              <p className="activity-feed__kind">{KIND_LABEL[entry.kind]}</p>
+              <p className="activity-feed__headline">{entry.headline}</p>
+              {entry.body ? <p className="activity-feed__body">{entry.body}</p> : null}
+            </div>
           </article>
         ))}
       </div>
