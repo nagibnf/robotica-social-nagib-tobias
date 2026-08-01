@@ -8,16 +8,17 @@ import { usePrsLive } from "./use-prs-live";
 
 const ACTS = 8;
 const SLIDE_TRANSITION_MS = 840;
+const FIELD_JOURNEY_SECONDS = 60;
 
 const fieldModes = [
-  { energy: 0.34, cameraY: 5.1, cameraZ: 10.8, fieldZ: 0.0 },
-  { energy: 0.2, cameraY: 4.7, cameraZ: 12.4, fieldZ: -0.8 },
-  { energy: 0.52, cameraY: 5.5, cameraZ: 9.8, fieldZ: 0.5 },
-  { energy: 0.29, cameraY: 4.9, cameraZ: 11.5, fieldZ: -0.4 },
-  { energy: 0.16, cameraY: 4.4, cameraZ: 13.0, fieldZ: -1.1 },
-  { energy: 0.4, cameraY: 5.3, cameraZ: 10.2, fieldZ: 0.35 },
-  { energy: 0.24, cameraY: 4.8, cameraZ: 11.9, fieldZ: -0.55 },
-  { energy: 0.48, cameraY: 5.6, cameraZ: 9.5, fieldZ: 0.7 },
+  { energy: 0.34, cameraX: 0.0, cameraY: 5.1, cameraZ: 10.8, lookX: 0.0, lookY: -0.8, fieldX: 0.0, fieldZ: 0.0, yaw: 0.0, tilt: -0.01 },
+  { energy: 0.2, cameraX: 2.1, cameraY: 4.3, cameraZ: 13.8, lookX: -1.0, lookY: -0.45, fieldX: -1.8, fieldZ: -1.6, yaw: 0.14, tilt: 0.055 },
+  { energy: 0.52, cameraX: -1.8, cameraY: 5.7, cameraZ: 8.8, lookX: 0.9, lookY: -1.1, fieldX: 1.4, fieldZ: 1.2, yaw: -0.18, tilt: -0.06 },
+  { energy: 0.29, cameraX: 2.6, cameraY: 6.8, cameraZ: 11.0, lookX: -1.2, lookY: -1.2, fieldX: -1.2, fieldZ: -0.6, yaw: 0.22, tilt: 0.08 },
+  { energy: 0.16, cameraX: -2.4, cameraY: 3.9, cameraZ: 14.8, lookX: 1.3, lookY: -0.35, fieldX: 1.8, fieldZ: -2.0, yaw: -0.15, tilt: 0.07 },
+  { energy: 0.4, cameraX: 1.0, cameraY: 4.1, cameraZ: 8.6, lookX: -0.6, lookY: -1.25, fieldX: -2.0, fieldZ: 1.5, yaw: 0.11, tilt: -0.09 },
+  { energy: 0.24, cameraX: -1.4, cameraY: 6.6, cameraZ: 13.2, lookX: 0.8, lookY: -0.5, fieldX: 2.2, fieldZ: -1.0, yaw: -0.22, tilt: 0.06 },
+  { energy: 0.48, cameraX: 2.3, cameraY: 5.9, cameraZ: 8.2, lookX: -1.1, lookY: -1.3, fieldX: -0.8, fieldZ: 1.8, yaw: 0.19, tilt: -0.04 },
 ];
 
 type DeckApi = {
@@ -82,6 +83,7 @@ function Field({ act }: { act: number }) {
       uTime: { value: 0 },
       uEnergy: { value: targetMode.current.energy },
       uPhase: { value: 0 },
+      uTransition: { value: 0 },
       uColor: { value: new THREE.Color("#88e888") },
     };
 
@@ -94,12 +96,16 @@ function Field({ act }: { act: number }) {
         uniform float uTime;
         uniform float uEnergy;
         uniform float uPhase;
+        uniform float uTransition;
         varying float vAlpha;
         void main() {
           vec3 p = position;
           float primary = sin(p.x * 0.48 + uTime * 0.32 + uPhase) * cos(p.z * 0.34 - uTime * 0.21);
           float secondary = sin(length(p.xz) * 0.52 - uTime * 0.28 + uPhase * 0.5);
+          float transitionWave = sin(p.z * 0.72 + p.x * 0.1 - uTime * 3.4 + uPhase * 1.7);
+          float transitionEnvelope = 1.0 - smoothstep(7.0, 30.0, length(p.xz - vec2(0.0, -2.0)));
           p.y += (primary * 0.72 + secondary * 0.28) * uEnergy;
+          p.y += transitionWave * transitionEnvelope * uTransition * 0.44;
           vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
           gl_Position = projectionMatrix * mvPosition;
           gl_PointSize = (1.7 + uEnergy * 2.2) * (180.0 / -mvPosition.z);
@@ -160,17 +166,25 @@ function Field({ act }: { act: number }) {
     scene.add(gateGroup);
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const clock = new THREE.Clock();
     let frame = 0;
     let time = 0;
     let currentEnergy = targetMode.current.energy;
+    let currentCameraX = targetMode.current.cameraX;
+    let currentCameraY = targetMode.current.cameraY;
+    let currentCameraZ = targetMode.current.cameraZ;
+    let currentFieldX = targetMode.current.fieldX;
     let currentFieldZ = targetMode.current.fieldZ;
-    let pointerX = 0;
-    let pointerY = 0;
-
-    const onPointerMove = (event: PointerEvent) => {
-      pointerX = (event.clientX / window.innerWidth - 0.5) * 0.32;
-      pointerY = (event.clientY / window.innerHeight - 0.5) * 0.18;
-    };
+    let currentYaw = targetMode.current.yaw;
+    let currentTilt = targetMode.current.tilt;
+    let currentLookX = targetMode.current.lookX;
+    let currentLookY = targetMode.current.lookY;
+    let journeyTarget = targetMode.current;
+    let journeyElapsed = FIELD_JOURNEY_SECONDS;
+    let journeyFrom = { ...journeyTarget };
+    // Presentation clickers do not provide useful pointer movement. Keep the
+    // composition biased as if the pointer rested at the viewport's right edge.
+    const fieldBiasX = 0.16;
 
     const onResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -179,40 +193,83 @@ function Field({ act }: { act: number }) {
     };
 
     const animate = () => {
-      time += reducedMotion ? 0 : 0.016;
+      const delta = Math.min(clock.getDelta(), 0.1);
+      time += reducedMotion ? 0 : delta;
       const mode = targetMode.current;
       const pulse = transitionPulse.current;
-      currentEnergy += (mode.energy + pulse * 0.28 - currentEnergy) * 0.055;
-      currentFieldZ += (mode.fieldZ - currentFieldZ) * 0.032;
+      const activePulse = reducedMotion ? 0 : pulse;
+
+      if (mode !== journeyTarget) {
+        journeyFrom = {
+          ...journeyTarget,
+          cameraX: currentCameraX,
+          cameraY: currentCameraY,
+          cameraZ: currentCameraZ,
+          lookX: currentLookX,
+          lookY: currentLookY,
+          fieldX: currentFieldX,
+          fieldZ: currentFieldZ,
+          yaw: currentYaw,
+          tilt: currentTilt,
+        };
+        journeyTarget = mode;
+        journeyElapsed = 0;
+      }
+
+      journeyElapsed = reducedMotion
+        ? FIELD_JOURNEY_SECONDS
+        : Math.min(FIELD_JOURNEY_SECONDS, journeyElapsed + delta);
+      const journeyProgress = journeyElapsed / FIELD_JOURNEY_SECONDS;
+      // Start the pan immediately enough to read against a repeating field,
+      // then decelerate for the rest of the minute into a soft final position.
+      const journeyEase = Math.sin((Math.PI * journeyProgress) / 2);
+      currentCameraX = THREE.MathUtils.lerp(journeyFrom.cameraX, journeyTarget.cameraX, journeyEase);
+      currentCameraY = THREE.MathUtils.lerp(journeyFrom.cameraY, journeyTarget.cameraY, journeyEase);
+      currentCameraZ = THREE.MathUtils.lerp(journeyFrom.cameraZ, journeyTarget.cameraZ, journeyEase);
+      currentFieldX = THREE.MathUtils.lerp(journeyFrom.fieldX, journeyTarget.fieldX, journeyEase);
+      currentFieldZ = THREE.MathUtils.lerp(journeyFrom.fieldZ, journeyTarget.fieldZ, journeyEase);
+      currentYaw = THREE.MathUtils.lerp(journeyFrom.yaw, journeyTarget.yaw, journeyEase);
+      currentTilt = THREE.MathUtils.lerp(journeyFrom.tilt, journeyTarget.tilt, journeyEase);
+      currentLookX = THREE.MathUtils.lerp(journeyFrom.lookX, journeyTarget.lookX, journeyEase);
+      currentLookY = THREE.MathUtils.lerp(journeyFrom.lookY, journeyTarget.lookY, journeyEase);
+
+      currentEnergy += (mode.energy + activePulse * 0.32 - currentEnergy) * 0.055;
       transitionPulse.current = reducedMotion ? 0 : Math.max(0, pulse * 0.94 - 0.004);
       uniforms.uTime.value = time;
       uniforms.uEnergy.value = currentEnergy;
-      uniforms.uPhase.value += reducedMotion ? 0 : 0.0015 + pulse * 0.016;
+      uniforms.uTransition.value = activePulse;
+      uniforms.uPhase.value += reducedMotion ? 0 : 0.0015 + activePulse * 0.018;
+      points.position.x = currentFieldX;
       points.position.z = currentFieldZ;
-      points.rotation.z += (pointerX - points.rotation.z) * 0.012;
+      points.rotation.y = currentYaw;
+      points.rotation.z = fieldBiasX + currentTilt;
+      grid.position.x = currentFieldX * 0.72;
       grid.position.z = -2 + currentFieldZ;
-      gridMaterial.opacity = 0.055 + currentEnergy * 0.11 + pulse * 0.05;
+      grid.rotation.y = currentYaw;
+      grid.rotation.z = currentTilt * 0.7;
+      gridMaterial.opacity = 0.055 + currentEnergy * 0.11 + activePulse * 0.06;
       gates.forEach((gate, index) => {
         const baseZ = gate.userData.baseZ as number;
-        gate.position.z += (baseZ + pulse * (4.5 + index * 0.55) - gate.position.z) * 0.08;
-        (gate.material as THREE.LineBasicMaterial).opacity = 0.035 + index * 0.012 + pulse * 0.11;
+        gate.position.z += (baseZ + activePulse * (5.2 + index * 0.62) - gate.position.z) * 0.08;
+        (gate.material as THREE.LineBasicMaterial).opacity = 0.035 + index * 0.012 + activePulse * 0.12;
       });
-      gateGroup.rotation.z += (pointerX * 0.18 - gateGroup.rotation.z) * 0.012;
-      camera.position.x += (pointerX * 2.2 - camera.position.x) * 0.018;
-      camera.position.y += (mode.cameraY - pointerY * 1.5 - camera.position.y) * 0.025;
-      camera.position.z += (mode.cameraZ - camera.position.z) * 0.025;
-      camera.lookAt(0, -0.8, -2.2);
+      gateGroup.position.x = 2.8 + currentFieldX * 0.28;
+      gateGroup.rotation.y = currentYaw * 0.8;
+      gateGroup.rotation.z = fieldBiasX * 0.18 + currentTilt * 0.6 + activePulse * 0.015;
+      camera.position.x = currentCameraX + fieldBiasX * 2.2;
+      camera.position.y = currentCameraY;
+      camera.position.z = currentCameraZ;
+      camera.lookAt(currentLookX, currentLookY, -2.2 + currentFieldZ * 0.18);
+      camera.rotateZ(currentTilt * 0.35);
       renderer.render(scene, camera);
       frame = window.requestAnimationFrame(animate);
     };
 
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("resize", onResize);
     animate();
 
     return () => {
       window.cancelAnimationFrame(frame);
-      window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("resize", onResize);
       geometry.dispose();
       material.dispose();
