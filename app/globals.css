@@ -57,53 +57,46 @@ button, a { font: inherit; }
 
 .activity-feed {
   position: fixed;
-  inset: 12% -8% -42% 42%;
+  inset: 8% 6% -28% 18%;
   z-index: 1;
   pointer-events: none;
   overflow: hidden;
-  perspective: 920px;
-  perspective-origin: 88% 28%;
+  perspective: 820px;
+  perspective-origin: 50% 56%;
   transform: translateZ(0);
-  -webkit-mask-image: linear-gradient(102deg, transparent 0%, rgb(0 0 0 / 0.45) 8%, #000 85%);
-  mask-image: linear-gradient(102deg, transparent 0%, rgb(0 0 0 / 0.45) 8%, #000 85%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 8%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 8%, #000 88%, transparent 100%);
 }
 
 .activity-feed__viewport {
   height: 100%;
   overflow: hidden;
   transform-style: preserve-3d;
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 78%, transparent 100%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 78%, transparent 100%);
-}
-
-.activity-feed__plane {
-  height: 100%;
-  transform: rotateX(38deg) rotateY(-18deg) rotateZ(1.5deg);
-  transform-origin: 92% 8%;
-  transform-style: preserve-3d;
 }
 
 .activity-feed__track {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 20px;
-  padding: 4vh 2% 36vh 0;
+  align-items: center;
+  gap: 22px;
+  padding: 38vh 10% 52vh;
   transform-style: preserve-3d;
-  animation: activity-feed-scroll 48s linear infinite;
+  transform-origin: 50% 100%;
+  animation: activity-feed-depth 54s linear infinite;
+  will-change: transform;
 }
 
 .activity-feed__block {
-  max-width: 20rem;
+  max-width: 26rem;
   width: 100%;
   padding: 0;
-  text-align: right;
+  text-align: center;
   color: rgb(245 246 242 / .34);
   font-family: var(--mono);
   font-size: 10px;
-  line-height: 1.45;
+  line-height: 1.5;
   letter-spacing: .028em;
-  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .activity-feed__kind {
@@ -130,9 +123,13 @@ button, a { font: inherit; }
   font-style: italic;
 }
 
-@keyframes activity-feed-scroll {
-  from { transform: translateY(0); }
-  to { transform: translateY(-50%); }
+@keyframes activity-feed-depth {
+  from {
+    transform: translate3d(0, 0, 260px) scale(1);
+  }
+  to {
+    transform: translate3d(0, -50%, -560px) scale(0.26);
+  }
 }
 
 .noise {
@@ -673,14 +670,16 @@ button, a { font: inherit; }
 @media (max-width: 760px) {
   .deck-chrome span:last-child { display: none; }
   .field { inset: 32% -40% -35% 2%; opacity: .28; }
-  .activity-feed { inset: 32% -35% -35% 28%; perspective-origin: 92% 32%; }
-  .activity-feed__plane { transform: rotateX(32deg) rotateY(-14deg) rotateZ(1deg); }
-  .activity-feed__track { align-items: flex-end; padding-right: 2%; gap: 14px; }
+  .activity-feed { inset: 14% 4% -22% 8%; perspective-origin: 50% 58%; }
+  .activity-feed__track { padding: 34vh 6% 48vh; gap: 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .wire-transition { display: none; }
-  .activity-feed__track { animation: none; transform: translateY(-12vh); }
+  .activity-feed__track {
+    animation: none;
+    transform: translate3d(0, -18vh, -120px) scale(0.72);
+  }
   .reveal .slides section,
   .reveal .slides section *,
   .progress-rail span,
