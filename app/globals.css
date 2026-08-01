@@ -58,60 +58,62 @@ button, a { font: inherit; }
 .activity-feed {
   position: fixed;
   inset: 12% -11% -42% 24%;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(102deg, transparent 0%, rgb(0 0 0 / 0.15) 14%, #000 58%, transparent 100%);
-  mask-image: linear-gradient(102deg, transparent 0%, rgb(0 0 0 / 0.15) 14%, #000 58%, transparent 100%);
+  transform: translateZ(0);
+  -webkit-mask-image: linear-gradient(102deg, transparent 0%, rgb(0 0 0 / 0.35) 12%, #000 72%);
+  mask-image: linear-gradient(102deg, transparent 0%, rgb(0 0 0 / 0.35) 12%, #000 72%);
 }
 
 .activity-feed__viewport {
   height: 100%;
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 72%, transparent 100%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 72%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 78%, transparent 100%);
 }
 
 .activity-feed__track {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 8vh 8% 40vh 14%;
-  animation: activity-feed-scroll 72s linear infinite;
+  gap: 16px;
+  padding: 4vh 6% 36vh 10%;
+  animation: activity-feed-scroll 48s linear infinite;
 }
 
 .activity-feed__block {
-  max-width: 22rem;
-  padding: 9px 0 9px 11px;
-  border-left: 1px solid rgb(245 246 242 / .08);
-  color: rgb(245 246 242 / .14);
+  max-width: 24rem;
+  padding: 10px 0 10px 12px;
+  border-left: 1px solid rgb(153 32 195 / .22);
+  background: linear-gradient(90deg, rgb(153 32 195 / .06), transparent 72%);
+  color: rgb(245 246 242 / .22);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.45;
   letter-spacing: .028em;
 }
 
 .activity-feed__kind {
-  margin: 0 0 5px;
-  color: rgb(153 32 195 / .28);
-  font-size: 7px;
+  margin: 0 0 6px;
+  color: rgb(153 32 195 / .52);
+  font-size: 8px;
   letter-spacing: .12em;
 }
 
 .activity-feed__headline {
   margin: 0;
-  color: rgb(245 246 242 / .17);
+  color: rgb(245 246 242 / .34);
 }
 
 .activity-feed__body {
-  margin: 5px 0 0;
-  color: rgb(245 246 242 / .1);
-  font-size: 8px;
+  margin: 6px 0 0;
+  color: rgb(245 246 242 / .2);
+  font-size: 9px;
   letter-spacing: .02em;
 }
 
 .activity-feed__block--utterance .activity-feed__headline {
-  color: rgb(245 246 242 / .19);
+  color: rgb(245 246 242 / .38);
   font-style: italic;
 }
 
