@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { RobotActivityFeed } from "./robot-activity-feed";
 import { formatTelemetryValue, type RobotTelemetry } from "./prs-live";
+import { SlicedText } from "./sliced-text";
 import { usePrsLive } from "./use-prs-live";
 
 const ACTS = 8;
@@ -424,62 +425,62 @@ export default function Home() {
       <div ref={revealRef} className="reveal">
         <div className="slides">
           <DeckSlide className="act act-opening">
-            <h1 className="impact impact-hero">ROBÓTICA<br />SOCIAL</h1>
-            <p className="support support-accent">DO CORPO À PRESENÇA</p>
-            <p className="micro micro-right">DOIS PARTICIPANTES.<br />UMA RELAÇÃO EM TEMPO REAL.</p>
+            <SlicedText as="h1" className="impact impact-hero">ROBÓTICA<br />SOCIAL</SlicedText>
+            <SlicedText as="p" className="support support-accent">DO CORPO À PRESENÇA</SlicedText>
+            <SlicedText as="p" className="micro micro-right">DOIS PARTICIPANTES.<br />UMA RELAÇÃO EM TEMPO REAL.</SlicedText>
           </DeckSlide>
 
           <DeckSlide className="act act-presence">
-            <h2 className="impact impact-wide">CORPO <span>≠</span><br />PRESENÇA</h2>
-            <p className="support support-bottom">ESTAR NO AMBIENTE <span>≠</span> PARTICIPAR DO AMBIENTE</p>
+            <SlicedText as="h2" className="impact impact-wide">CORPO <span className="text-accent">≠</span><br />PRESENÇA</SlicedText>
+            <SlicedText as="p" className="support support-bottom">ESTAR NO AMBIENTE <span className="text-accent">≠</span> PARTICIPAR DO AMBIENTE</SlicedText>
           </DeckSlide>
 
           <DeckSlide className="act act-architecture">
-            <h2 className="impact impact-stack">PERCEBER.<br />ORQUESTRAR.<br /><span>EXPRESSAR.</span></h2>
+            <SlicedText as="h2" className="impact impact-stack">PERCEBER.<br />ORQUESTRAR.<br /><span className="text-accent">EXPRESSAR.</span></SlicedText>
             <div className="technical-strip" aria-label="Camadas do PRS">
-              <p><b>PERCEPÇÃO</b><br />voz · visão · sensores · distância</p>
-              <p><b>ORQUESTRAÇÃO</b><br />identidade · contexto · memória · segurança</p>
-              <p><b>EXPRESSÃO</b><br />fala · olhar · gestos · postura · ações</p>
+              <SlicedText as="p"><b>PERCEPÇÃO</b><br />voz · visão · sensores · distância</SlicedText>
+              <SlicedText as="p"><b>ORQUESTRAÇÃO</b><br />identidade · contexto · memória · segurança</SlicedText>
+              <SlicedText as="p"><b>EXPRESSÃO</b><br />fala · olhar · gestos · postura · ações</SlicedText>
             </div>
           </DeckSlide>
 
           <DeckSlide className="act act-state">
-            <h2 className="impact impact-wide">PRESENÇA<br /><span>É ESTADO.</span></h2>
+            <SlicedText as="h2" className="impact impact-wide">PRESENÇA<br /><span className="text-accent">É ESTADO.</span></SlicedText>
             <div className="state-readout" aria-label="Estado do Tobias">
-              <p><b>INTERLOCUTOR</b><span>NAGIB</span></p>
-              <p><b>INTENÇÃO</b><span>EXPLICAR</span></p>
-              <p><b>MEMÓRIA</b><span>ESTA SESSÃO</span></p>
-              <p><b>FALA</b><span>25 SEGUNDOS</span></p>
-              <p><b>SEGURANÇA</b><span>NORMAL</span></p>
+              <SlicedText as="p"><b>INTERLOCUTOR</b><span className="text-accent">NAGIB</span></SlicedText>
+              <SlicedText as="p"><b>INTENÇÃO</b><span className="text-accent">EXPLICAR</span></SlicedText>
+              <SlicedText as="p"><b>MEMÓRIA</b><span className="text-accent">ESTA SESSÃO</span></SlicedText>
+              <SlicedText as="p"><b>FALA</b><span className="text-accent">25 SEGUNDOS</span></SlicedText>
+              <SlicedText as="p"><b>SEGURANÇA</b><span className="text-accent">NORMAL</span></SlicedText>
             </div>
           </DeckSlide>
 
           <DeckSlide className="act act-question">
-            <h2 className="impact impact-question">QUANDO COMEÇAMOS<br />A TRATAR UMA MÁQUINA<br /><span>COMO ALGUÉM?</span></h2>
+            <SlicedText as="h2" className="impact impact-question">QUANDO COMEÇAMOS<br />A TRATAR UMA MÁQUINA<br /><span className="text-accent">COMO ALGUÉM?</span></SlicedText>
           </DeckSlide>
 
           <DeckSlide className="act act-value">
-            <h2 className="impact impact-wide">ATENÇÃO<br />É FÁCIL.</h2>
-            <p className="counter-impact">RELAÇÃO<br /><span>É DIFÍCIL.</span></p>
-            <p className="micro micro-left">PRESENÇA ADICIONA VALOR<br />QUANDO CRIA CONTINUIDADE.</p>
+            <SlicedText as="h2" className="impact impact-wide">ATENÇÃO<br />É FÁCIL.</SlicedText>
+            <SlicedText as="p" className="counter-impact">RELAÇÃO<br /><span className="text-accent">É DIFÍCIL.</span></SlicedText>
+            <SlicedText as="p" className="micro micro-left">PRESENÇA ADICIONA VALOR<br />QUANDO CRIA CONTINUIDADE.</SlicedText>
           </DeckSlide>
 
           <DeckSlide className="act act-limits">
-            <h2 className="impact impact-wide">TODA PRESENÇA<br /><span>PRECISA DE LIMITES.</span></h2>
+            <SlicedText as="h2" className="impact impact-wide">TODA PRESENÇA<br /><span className="text-accent">PRECISA DE LIMITES.</span></SlicedText>
             <div className="limit-strip" aria-label="Camadas de risco">
-              <p>01 / FÍSICO</p>
-              <p>02 / CONVERSACIONAL</p>
-              <p>03 / RELACIONAL</p>
+              <SlicedText as="p">01 / FÍSICO</SlicedText>
+              <SlicedText as="p">02 / CONVERSACIONAL</SlicedText>
+              <SlicedText as="p">03 / RELACIONAL</SlicedText>
             </div>
           </DeckSlide>
 
           <DeckSlide className="act act-closing">
-            <p className="preclose">A PERGUNTA NÃO É SE A IA TERÁ UM CORPO.</p>
-            <h2 className="impact impact-closing">QUE RELAÇÕES<br />VAMOS <span>PROJETAR?</span></h2>
+            <SlicedText as="p" className="preclose">A PERGUNTA NÃO É SE A IA TERÁ UM CORPO.</SlicedText>
+            <SlicedText as="h2" className="impact impact-closing">QUE RELAÇÕES<br />VAMOS <span className="text-accent">PROJETAR?</span></SlicedText>
             <div className="closing-meta">
-              <p>PRS / PERSONAL ROBOT SYSTEM</p>
-              <p>NAGIB × TOBIAS</p>
-              <a href="https://www.bolha.com.br/produtos/tobias-robo" target="_blank" rel="noreferrer">BOLHA.COM.BR / TOBIAS</a>
+              <SlicedText as="p">PRS / PERSONAL ROBOT SYSTEM</SlicedText>
+              <SlicedText as="p">NAGIB × TOBIAS</SlicedText>
+              <SlicedText as="a" href="https://www.bolha.com.br/produtos/tobias-robo" target="_blank" rel="noreferrer">BOLHA.COM.BR / TOBIAS</SlicedText>
             </div>
           </DeckSlide>
         </div>

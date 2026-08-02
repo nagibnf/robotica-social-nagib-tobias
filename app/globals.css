@@ -356,17 +356,6 @@ button, a { font: inherit; }
   transition: none;
 }
 
-.reveal .slides > section.is-exiting :is(
-  .technical-strip p,
-  .state-readout p,
-  .limit-strip p,
-  .closing-meta > *
-) {
-  animation: detail-dematerialize 440ms
-    var(--motion-out-delay, 0ms)
-    var(--slide-exit-ease) both;
-}
-
 @keyframes slide-frame-exit {
   0% {
     opacity: 1;
@@ -441,87 +430,59 @@ button, a { font: inherit; }
   animation: grid-tick-out 360ms var(--slide-exit-ease) both;
 }
 
-.act-label,
-.support,
-.micro,
+/* Strip/container shells no longer fade as units — sliced bands own
+   enter/exit visibility so a parent opacity:0 cannot mute the glitch. */
 .technical-strip,
 .state-readout,
-.counter-impact,
 .limit-strip,
-.preclose,
 .closing-meta {
-  transition:
-    opacity var(--slide-dur) var(--slide-enter-ease),
-    transform var(--slide-dur) var(--slide-enter-ease);
+  transition: none;
 }
 
-.future .act-label,
-.future .support,
-.future .micro,
-.future .technical-strip,
-.future .state-readout,
-.future .counter-impact,
-.future .limit-strip,
-.future .preclose,
-.future .closing-meta {
-  opacity: 0;
-  transform: translate3d(0, 20px, -40px);
-  transition-timing-function: var(--slide-exit-ease);
-}
-
-.past .act-label,
-.past .support,
-.past .micro,
-.past .technical-strip,
-.past .state-readout,
-.past .counter-impact,
-.past .limit-strip,
-.past .preclose,
-.past .closing-meta {
-  opacity: 0;
-  transform: translate3d(0, -14px, 40px);
-  transition-timing-function: var(--slide-exit-ease);
-}
-
-.future .impact {
-  opacity: 0;
+/* Wireframe title treatment per glyph so scramble + stagger can own motion. */
+.future .impact .glyph {
   color: transparent;
   -webkit-text-stroke: 1px rgb(243 245 240 / .34);
-  transform: translate3d(0, 28px, -110px) rotateX(-8deg) scale(.98);
+  font-variation-settings: "wght" 500;
 }
 
-.past .impact {
-  animation: title-dematerialize var(--slide-dur) var(--slide-exit-ease) both;
-}
-
-.future .impact span {
+.future .impact .text-accent .glyph {
   color: transparent;
   -webkit-text-stroke: 1px rgb(136 232 136 / .42);
 }
 
-.present .impact {
-  animation: title-materialize var(--slide-dur) 110ms var(--slide-enter-ease) both;
+.present .impact .glyph {
+  animation:
+    title-materialize var(--slide-dur) calc(110ms + var(--glyph-delay, 0ms)) var(--slide-enter-ease) both,
+    glyph-in var(--slide-dur) calc(110ms + var(--glyph-delay, 0ms)) steps(4, end) both;
 }
 
-.present .impact span {
-  animation: accent-materialize var(--slide-dur) 110ms var(--slide-enter-ease) both;
+.present .impact .text-accent .glyph {
+  animation:
+    accent-materialize var(--slide-dur) calc(110ms + var(--glyph-delay, 0ms)) var(--slide-enter-ease) both,
+    glyph-in var(--slide-dur) calc(110ms + var(--glyph-delay, 0ms)) steps(4, end) both;
 }
 
-.past .impact span {
-  animation: accent-dematerialize var(--slide-dur) var(--slide-exit-ease) both;
+.is-exiting .impact .glyph {
+  animation:
+    title-dematerialize var(--slide-dur) calc(var(--glyph-delay, 0ms) * .35) var(--slide-exit-ease) both,
+    glyph-out var(--slide-dur) calc(var(--glyph-delay, 0ms) * .35) steps(3, end) both;
+}
+
+.is-exiting .impact .text-accent .glyph {
+  animation:
+    accent-dematerialize var(--slide-dur) calc(var(--glyph-delay, 0ms) * .35) var(--slide-exit-ease) both,
+    glyph-out var(--slide-dur) calc(var(--glyph-delay, 0ms) * .35) steps(3, end) both;
 }
 
 @keyframes title-materialize {
   0% {
-    opacity: 0;
     color: transparent;
     -webkit-text-stroke: 1px rgb(243 245 240 / .3);
     font-variation-settings: "wght" 500;
     text-shadow: 0 0 14px rgb(136 232 136 / .08);
-    transform: translate3d(0, 28px, -110px) rotateX(-8deg) scale(.98);
   }
   38% {
-    opacity: .82;
     color: transparent;
     -webkit-text-stroke: 1px rgb(243 245 240 / .72);
     text-shadow: 0 0 9px rgb(136 232 136 / .13);
@@ -531,12 +492,10 @@ button, a { font: inherit; }
     -webkit-text-stroke: 1px rgb(243 245 240 / .46);
   }
   100% {
-    opacity: 1;
     color: var(--paper);
     -webkit-text-stroke: 0 transparent;
     font-variation-settings: "wght" 610;
     text-shadow: none;
-    transform: translate3d(0, 0, 0) rotateX(0) scale(1);
   }
 }
 
@@ -568,47 +527,34 @@ button, a { font: inherit; }
 
 @keyframes title-dematerialize {
   0% {
-    opacity: 1;
     color: var(--paper);
     -webkit-text-stroke: 0 transparent;
     font-variation-settings: "wght" 610;
-    transform: translate3d(0, 0, 0) rotateX(0) scale(1);
   }
   24% {
-    opacity: .92;
     color: transparent;
     -webkit-text-stroke: 1px rgb(243 245 240 / .68);
   }
   100% {
-    opacity: 0;
     color: transparent;
     -webkit-text-stroke: 1px rgb(136 232 136 / .18);
     font-variation-settings: "wght" 520;
-    transform: translate3d(0, -4px, 0);
   }
 }
 
-.present .act-label { transition-delay: 120ms; }
-.present .support,
-.present .preclose { transition-delay: 200ms; }
-.present .micro,
-.present .counter-impact,
-.present .technical-strip,
-.present .state-readout,
-.present .limit-strip,
-.present .closing-meta { transition-delay: 280ms; }
-
-.present :is(
-  .technical-strip p,
-  .state-readout p,
-  .limit-strip p,
-  .closing-meta > *
-) {
-  animation: detail-materialize 620ms
-    var(--motion-in-delay, 320ms)
-    var(--slide-enter-ease) both;
+.support,
+.micro,
+.counter-impact,
+.preclose {
+  --motion-in-delay: 200ms;
+  --motion-out-delay: 0ms;
 }
 
+.micro {
+  --motion-in-delay: 280ms;
+}
+
+/* Stagger detail blocks as units; their inner sliced bands own the glitch. */
 :is(
   .technical-strip,
   .state-readout,
@@ -659,29 +605,6 @@ button, a { font: inherit; }
   --motion-out-delay: 112ms;
 }
 
-@keyframes detail-materialize {
-  0% {
-    opacity: 0;
-    transform: translate3d(12px, 8px, -22px);
-  }
-  45% { opacity: .45; }
-  100% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes detail-dematerialize {
-  0% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    opacity: 0;
-    transform: translate3d(-8px, -5px, 0);
-  }
-}
-
 @keyframes grid-tick-in {
   0% { opacity: 0; transform: scaleX(0); }
   100% { opacity: 1; transform: scaleX(1); }
@@ -690,6 +613,118 @@ button, a { font: inherit; }
 @keyframes grid-tick-out {
   0% { opacity: 1; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(.18); }
+}
+
+/* --- Per-glyph Codrops scramble + staggered offset (IN + OUT) --- */
+.sliced {
+  position: relative;
+  display: block;
+}
+
+.sliced__glyphs {
+  display: block;
+}
+
+.glyph {
+  display: inline-block;
+  position: relative;
+  white-space: pre;
+  will-change: transform, opacity, color;
+  --glyph-i: 0;
+  --glyph-delay: calc(var(--glyph-i) * 16ms);
+  --glyph-x: calc(((var(--glyph-i) % 2) * 2 - 1) * (10px + (var(--glyph-i) % 7) * 5px));
+}
+
+.glyph--space {
+  width: 0.32em;
+  will-change: auto;
+}
+
+.future .glyph {
+  opacity: 0;
+}
+
+.future .glyph:not(.glyph--space) {
+  transform: translate3d(var(--glyph-x), 10px, -24px) skewX(calc(((var(--glyph-i) % 2) * 2 - 1) * 6deg));
+}
+
+.present .glyph--space {
+  animation: glyph-space-in 420ms
+    calc(var(--motion-in-delay, 120ms) + var(--glyph-delay, 0ms))
+    var(--slide-enter-ease) both;
+}
+
+.is-exiting .glyph--space {
+  animation: glyph-space-out 280ms
+    calc(var(--motion-out-delay, 0ms) + var(--glyph-delay, 0ms) * .35)
+    var(--slide-exit-ease) both;
+}
+
+@keyframes glyph-space-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes glyph-space-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.present .sliced:not(.impact) .glyph:not(.glyph--space) {
+  animation: glyph-in 700ms
+    calc(var(--motion-in-delay, 120ms) + var(--glyph-delay, 0ms))
+    steps(4, end) both;
+}
+
+.is-exiting .sliced:not(.impact) .glyph:not(.glyph--space) {
+  animation: glyph-out 560ms
+    calc(var(--motion-out-delay, 0ms) + var(--glyph-delay, 0ms) * .35)
+    steps(3, end) both;
+}
+
+@keyframes glyph-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(var(--glyph-x), 12px, -30px) skewX(calc(((var(--glyph-i) % 2) * 2 - 1) * 8deg));
+  }
+  28% {
+    opacity: 1;
+    transform: translate3d(calc(var(--glyph-x) * -0.22), -2px, 0) skewX(calc(((var(--glyph-i) % 2) * 2 - 1) * -3deg));
+  }
+  62% {
+    opacity: 1;
+    transform: translate3d(calc(var(--glyph-x) * 0.08), 1px, 0) skewX(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) skewX(0deg);
+  }
+}
+
+@keyframes glyph-out {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) skewX(0deg);
+  }
+  30% {
+    opacity: 1;
+    transform: translate3d(calc(var(--glyph-x) * -0.16), -2px, 0) skewX(calc(((var(--glyph-i) % 2) * 2 - 1) * 4deg));
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--glyph-x), -10px, 18px) skewX(calc(((var(--glyph-i) % 2) * 2 - 1) * 8deg));
+  }
+}
+
+/* State readout: glyphs wrapper preserves the two-column row. */
+.state-readout > .sliced {
+  display: block;
+}
+
+.state-readout .sliced__glyphs {
+  display: grid;
+  grid-template-columns: .95fr 1.05fr;
+  width: 100%;
 }
 
 .act-label {
@@ -762,12 +797,10 @@ button, a { font: inherit; }
   transform-style: preserve-3d;
   backface-visibility: hidden;
   paint-order: stroke fill;
-  will-change: transform, opacity, color;
+  will-change: color;
 }
 
-.impact span,
-.support span,
-.counter-impact span { color: var(--accent); }
+.text-accent { color: var(--accent); }
 
 .impact-hero { top: 168px; font-size: 158px; line-height: .82; }
 .impact-wide { font-size: 132px; }
@@ -846,7 +879,7 @@ button, a { font: inherit; }
 }
 
 .state-readout b { color: var(--muted); }
-.state-readout span { color: var(--accent); font-weight: 700; }
+.state-readout .text-accent { color: var(--accent); font-weight: 700; }
 
 .counter-impact {
   position: absolute;
@@ -1067,18 +1100,21 @@ button, a { font: inherit; }
   .future .impact,
   .past .impact,
   .present .impact,
-  .future .impact span,
-  .past .impact span,
-  .present .impact span {
+  .future .impact .text-accent,
+  .past .impact .text-accent,
+  .present .impact .text-accent,
+  .glyph {
     -webkit-text-stroke: 0 transparent;
     transform: none;
   }
 
   .future .impact,
   .past .impact,
-  .present .impact { color: var(--paper); }
+  .present .impact,
+  .future .glyph,
+  .past .glyph,
+  .present .glyph { color: var(--paper); opacity: 1; }
 
-  .future .impact span,
-  .past .impact span,
-  .present .impact span { color: var(--accent); }
+  .text-accent,
+  .text-accent .glyph { color: var(--accent); }
 }
