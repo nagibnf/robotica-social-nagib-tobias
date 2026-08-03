@@ -14,24 +14,22 @@ import {
 } from "./prs-live";
 
 /**
- * Same-origin proxy path. On localhost, EventSource hits the unbuffered Node
- * proxy directly (avoids Next rewrite body aggregation on SSE).
+ * Always same-origin `/prs-api` so the raw PRS API is never a public URL/port.
+ * - Docker/LAN/Cloudflare: presentation gateway on the page port proxies SSE
+ *   unbuffered to the loopback PRS proxy → Tailscale PRS host.
+ * - `next dev` only: optional direct loopback :3010 (Next rewrites buffer SSE).
  */
 function prsApiBase() {
   if (typeof window !== "undefined") {
-    const proxyPort = process.env.NEXT_PUBLIC_PRS_PROXY_PORT ?? "3010";
-    const { hostname, protocol } = window.location;
-    const useDirectProxy =
-      process.env.NEXT_PUBLIC_PRS_LIVE === "1" ||
-      hostname === "localhost" ||
-      hostname === "127.0.0.1";
-    // Bypass Next rewrites for SSE (Next buffers event-stream on some paths).
-    if (useDirectProxy) {
-      const host =
-        hostname === "localhost" || hostname === "127.0.0.1" ? "127.0.0.1" : hostname;
-      const proto =
-        hostname === "localhost" || hostname === "127.0.0.1" ? "http:" : protocol;
-      return `${proto}//${host}:${proxyPort}/prs-api`;
+    const { hostname } = window.location;
+    const isLoopback = hostname === "localhost" || hostname === "127.0.0.1";
+    if (
+      process.env.NODE_ENV === "development" &&
+      isLoopback &&
+      process.env.NEXT_PUBLIC_PRS_LIVE === "1"
+    ) {
+      const proxyPort = process.env.NEXT_PUBLIC_PRS_PROXY_PORT ?? "3010";
+      return `http://127.0.0.1:${proxyPort}/prs-api`;
     }
   }
   return "/prs-api";
@@ -105,10 +103,10 @@ export function usePrsLive(): PrsLiveState {
     };
 
     const runtimeSource = new EventSource(
-      `${api}/runtime/events/stream?view=presentation&replay=100&follow=1`,
+      `${withTrailingSlash(`${api}/runtime/events/stream`)}?view=presentation&replay=100&follow=1`,
     );
     const transportSource = new EventSource(
-      `${api}/brain_and_soul/transport/stream?view=presentation&replay=300&follow=1`,
+      `${withTrailingSlash(`${api}/brain_and_soul/transport/stream`)}?view=presentation&replay=300&follow=1`,
     );
 
     runtimeSource.addEventListener("runtime", (message) => {

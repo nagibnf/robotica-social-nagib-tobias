@@ -10,6 +10,16 @@ Standing conventions and a dated decision log for this presentation deck.
 
 ## Decision log
 
+### 2026-08-03 — Same-origin PRS via gateway (no public API URL)
+
+- Live PRS data must stay on Odin (Tailscale `PRS_HOST`); do not publish a
+  separate public hostname/port for raw `/api` or `:3010`.
+- Docker entry: loopback `prs-proxy` + loopback Next + public
+  `presentation-gateway` on the single published port. Browser uses only
+  `/prs-api` on the robotica URL; Cloudflare maps that one origin.
+- `NEXT_PUBLIC_PRS_LIVE=1` / direct `:3010` is for `next dev` only (Next
+  rewrites buffer SSE). Production builds bake `NEXT_PUBLIC_PRS_LIVE=0`.
+
 ### 2026-08-01 — Sliced text IN/OUT transitions
 
 - Added `SlicedText`: per-glyph spans with accessible `aria-label` on the host; visual glyphs are `aria-hidden`.

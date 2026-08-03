@@ -43,15 +43,17 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Abra `http://<ip-da-máquina>:3000`. O browser usa a porta **3010** no mesmo
-host para streams SSE (evita buffer do Next). Garanta que a máquina alcança
-`PRS_HOST` (ex.: Tailscale).
+Abra `http://<ip-da-máquina>:3000` (ou o hostname Cloudflare do deck). O
+browser fala só com **a mesma origem** em `/prs-api/*`; um gateway no
+container encaminha SSE sem buffer para o proxy loopback, que busca o PRS em
+`PRS_HOST` (Tailscale/LAN). A API bruta **não** é publicada em porta/URL
+separada.
 
 Sem Compose, só imagem:
 
 ```bash
 docker build -t robotica-social-deck .
-docker run --rm -p 3000:3000 -p 3010:3010 \
+docker run --rm -p 3000:3000 \
   -e PRS_HOST=http://100.91.252.69:8080 \
   robotica-social-deck
 ```

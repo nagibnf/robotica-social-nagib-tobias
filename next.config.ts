@@ -25,7 +25,8 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     if (isGitHubPages) return [];
-    // Local presentation: browser → Next → prs-proxy (SSE-safe) → Tailscale PRS.
+    // next dev fallback: browser → Next → loopback prs-proxy → Tailscale PRS.
+    // Docker production uses presentation-gateway for unbuffered /prs-api SSE.
     return [
       {
         source: "/prs-api/:path*",
