@@ -42,7 +42,7 @@ function splitToGlyphs(
 
   if (typeof node === "string" || typeof node === "number") {
     return Array.from(String(node), (char, charIndex) => {
-      if (char === "\n") return null;
+      if (char === "\n" || char === "\u2060") return null;
       const glyphIndex = indexRef.current;
       indexRef.current += 1;
       const isSpace = char === " " || char === "\t";

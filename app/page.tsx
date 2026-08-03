@@ -466,7 +466,7 @@ export default function Home() {
           </DeckSlide>
 
           <DeckSlide className="act act-limits">
-            <SlicedText as="h2" className="impact impact-wide">TODA PRESENÇA<br /><span className="text-accent">PRECISA DE LIMITES.</span></SlicedText>
+            <SlicedText as="h2" className="impact impact-wide">TODA PRESENÇA<br /><span className="text-accent impact-line-fit">{"PRECISA DE LIMITES\u2060."}</span></SlicedText>
             <div className="limit-strip" aria-label="Camadas de risco">
               <SlicedText as="p">01 / FÍSICO</SlicedText>
               <SlicedText as="p">02 / CONVERSACIONAL</SlicedText>

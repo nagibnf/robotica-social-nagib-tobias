@@ -10,6 +10,8 @@
   --display: "Syne Variable", "Helvetica Neue", sans-serif;
   --mono: "Space Mono", monospace;
   --grid-x: 72px;
+  /* Horizontal safe inset for slide copy (left anchor + matching right limit). */
+  --text-safe-x: var(--grid-x);
   --grid-top: 64px;
   --content-top: 174px;
   --grid-bottom: 72px;
@@ -410,6 +412,8 @@ button, a { font: inherit; }
   height: 810px;
   padding: var(--grid-top) var(--grid-x) var(--grid-bottom);
   overflow: hidden;
+  container-type: inline-size;
+  container-name: slide;
 }
 
 .act-frame::after {
@@ -730,7 +734,8 @@ button, a { font: inherit; }
 .act-label {
   position: absolute;
   top: var(--grid-top);
-  left: var(--grid-x);
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
   margin: 0;
   color: var(--accent);
   font-family: var(--mono);
@@ -744,8 +749,8 @@ button, a { font: inherit; }
   position: fixed;
   z-index: 5;
   top: var(--grid-top);
-  left: var(--grid-x);
-  right: var(--grid-x);
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
   display: flex;
   flex-wrap: wrap;
   gap: 10px 28px;
@@ -783,9 +788,11 @@ button, a { font: inherit; }
 
 .impact {
   position: absolute;
-  left: var(--grid-x);
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
   top: var(--content-top);
   margin: 0;
+  overflow-x: clip;
   color: var(--paper);
   font-size: 122px;
   line-height: .89;
@@ -802,6 +809,33 @@ button, a { font: inherit; }
 
 .text-accent { color: var(--accent); }
 
+/* Glyphs are inline-block; keep accent lines (e.g. PRECISA DE LIMITES.) on one row. */
+.impact .text-accent {
+  white-space: nowrap;
+}
+
+.counter-impact .text-accent {
+  white-space: nowrap;
+}
+
+.impact.sliced > .sliced__glyphs {
+  max-width: 100%;
+}
+
+.impact-line-fit {
+  display: block;
+  width: 100%;
+  font-size: clamp(70px, 7.25cqw, 106px);
+  letter-spacing: -0.08em;
+  white-space: nowrap;
+}
+
+.act-limits .impact,
+.act-limits .limit-strip {
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
+}
+
 .impact-hero { top: 168px; font-size: 158px; line-height: .82; }
 .impact-wide { font-size: 132px; }
 .impact-stack { top: 150px; font-size: 105px; line-height: .92; }
@@ -817,8 +851,20 @@ button, a { font: inherit; }
   text-transform: uppercase;
 }
 
-.support-accent { left: var(--grid-x); top: 548px; color: var(--accent); font-size: 24px; }
-.support-bottom { left: var(--grid-x); bottom: 98px; font-size: 22px; color: var(--muted); }
+.support-accent {
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
+  top: 548px;
+  color: var(--accent);
+  font-size: 24px;
+}
+.support-bottom {
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
+  bottom: 98px;
+  font-size: 22px;
+  color: var(--muted);
+}
 
 .micro {
   position: absolute;
@@ -832,13 +878,22 @@ button, a { font: inherit; }
   text-transform: uppercase;
 }
 
-.micro-right { right: var(--grid-x); bottom: 75px; text-align: right; }
-.micro-left { left: var(--grid-x); bottom: 112px; }
+.micro-right {
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
+  bottom: 75px;
+  text-align: right;
+}
+.micro-left {
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
+  bottom: 112px;
+}
 
 .technical-strip {
   position: absolute;
-  left: var(--grid-x);
-  right: var(--grid-x);
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
   bottom: var(--grid-bottom);
   display: grid;
   grid-template-columns: .9fr 1.25fr 1fr;
@@ -861,9 +916,10 @@ button, a { font: inherit; }
 
 .state-readout {
   position: absolute;
-  right: var(--grid-x);
+  right: var(--text-safe-x);
   top: var(--content-top);
-  width: 486px;
+  width: min(486px, calc(100% - var(--text-safe-x) * 2));
+  max-width: calc(100% - var(--text-safe-x) * 2);
   border-top: 2px solid var(--accent);
 }
 
@@ -883,7 +939,8 @@ button, a { font: inherit; }
 
 .counter-impact {
   position: absolute;
-  right: var(--grid-x);
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
   top: 348px;
   margin: 0;
   color: var(--muted);
@@ -898,8 +955,8 @@ button, a { font: inherit; }
 
 .limit-strip {
   position: absolute;
-  left: var(--grid-x);
-  right: var(--grid-x);
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
   bottom: 86px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -919,7 +976,8 @@ button, a { font: inherit; }
 
 .preclose {
   position: absolute;
-  left: var(--grid-x);
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
   top: var(--content-top);
   margin: 0;
   color: var(--muted);
@@ -932,8 +990,8 @@ button, a { font: inherit; }
 
 .closing-meta {
   position: absolute;
-  left: var(--grid-x);
-  right: var(--grid-x);
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
   bottom: var(--grid-bottom);
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -959,8 +1017,8 @@ button, a { font: inherit; }
 .deck-chrome {
   position: fixed;
   z-index: 5;
-  left: 24px;
-  right: 24px;
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
   bottom: 20px;
   display: flex;
   justify-content: space-between;
@@ -1019,7 +1077,7 @@ button, a { font: inherit; }
   z-index: 20;
   display: grid;
   place-items: center;
-  padding: 8vw;
+  padding: var(--grid-top) var(--text-safe-x) var(--grid-bottom);
   background: #101310;
   opacity: 0;
   visibility: hidden;
@@ -1033,6 +1091,7 @@ button, a { font: inherit; }
 
 .contingency h2 {
   margin: 0;
+  max-width: 100%;
   color: var(--paper);
   font-family: var(--display);
   font-size: clamp(48px, 6vw, 108px);
@@ -1047,6 +1106,8 @@ button, a { font: inherit; }
 
 .contingency-foot {
   position: absolute;
+  left: var(--text-safe-x);
+  right: var(--text-safe-x);
   bottom: 46px;
   margin: 0;
   color: var(--muted);
